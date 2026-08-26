@@ -1,0 +1,6 @@
+{
+  "name": "คลีนิกฟุตบอลยะลา - Yala Football Clinic",
+  "description": "ระบบบริหารจัดการคลีนิกฟุตบอลยะลา ครอบคลุมการลงทะเบียน สมาชิก การเงิน ตารางฝึกซ้อม ประเมินทักษะ บันทึกเวลาเรียน การบริหารโค้ชและทรัพย์สิน พร้อมระบบล็อกอิน การกำหนดสิทธิ์เข้าถึง (RBAC) และฐานข้อมูล Supabase PostgreSQL (Free Tier)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
