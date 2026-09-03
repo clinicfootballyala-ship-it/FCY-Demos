@@ -609,8 +609,21 @@ const DocumentPaperView: React.FC<DocumentPaperViewProps> = ({ terms, organizati
       
       {/* Emblem & Intro */}
       <div className="text-center pb-6 border-b border-slate-200 space-y-2">
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl bg-blue-600 text-white text-xl font-black shadow-xs mb-1">
-          {organizationConfig?.shortName || 'YFC'}
+        <div className="flex justify-center mb-2">
+          {organizationConfig?.logoUrl ? (
+            <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-sm border border-slate-200 bg-white p-1 flex items-center justify-center">
+              <img 
+                src={organizationConfig.logoUrl} 
+                alt={organizationConfig.nameTh || organizationConfig.name || 'โลโก้องค์กร'} 
+                className="w-full h-full object-contain"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+          ) : (
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 text-white text-xl font-black shadow-xs">
+              {organizationConfig?.shortName || 'YFC'}
+            </div>
+          )}
         </div>
         <h2 className="text-lg font-bold text-slate-900">{terms.title}</h2>
         <p className="text-xs text-slate-500 font-medium">

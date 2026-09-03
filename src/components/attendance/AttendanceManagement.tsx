@@ -161,10 +161,10 @@ export const AttendanceManagement: React.FC<{ initialScheduleId?: string }> = ({
         <div>
           <div className="flex items-center gap-2">
             <ClipboardCheck className="w-5 h-5 text-blue-600" />
-            <h1 className="text-xl font-bold text-slate-900">ระบบบันทึกเวลาเรียน (เช็คชื่อเข้าฝึกซ้อม)</h1>
+            <h1 className="text-xl font-bold text-slate-900">ระบบบันทึกการมาเรียน</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            เช็คชื่อรายบุคคล บันทึกเวลามาเรียน มาสาย ลาป่วย หรือขาดซ้อม พร้อมสถิติสะสม
+            เช็คชื่อรายบุคคล มาเรียน มาสาย ลาป่วย หรือขาดซ้อม
           </p>
         </div>
 
@@ -212,7 +212,7 @@ export const AttendanceManagement: React.FC<{ initialScheduleId?: string }> = ({
             <div className="flex items-center gap-2">
               <span className="font-semibold text-blue-800">หัวข้อ: {activeSchedule.topic}</span>
               <span className="text-slate-400">•</span>
-              <span>จำนวนนักเรียนในรุ่น: {targetStudents.length} คน</span>
+              <span>จำนวนนักเรียน: {targetStudents.length} คน</span>
             </div>
 
             {/* Quick batch buttons */}
@@ -223,7 +223,7 @@ export const AttendanceManagement: React.FC<{ initialScheduleId?: string }> = ({
                 onClick={() => setAllStatus('present')}
                 className="px-2.5 py-1 rounded bg-emerald-100 text-emerald-800 font-medium text-[11px] hover:bg-emerald-200"
               >
-                มาครบทุกคน (Present)
+                มาครบทุกคน
               </button>
               <button
                 type="button"

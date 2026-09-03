@@ -19,11 +19,16 @@ import {
   Building2,
   Calendar,
   Eye,
-  Paperclip
+  Paperclip,
+  ChevronDown,
+  ChevronUp,
+  ChevronRight,
+  User,
+  CreditCard as PaymentIcon
 } from 'lucide-react';
 
 export const PaymentManagement: React.FC = () => {
-  const { payments, students, addPayment, updatePaymentStatus, currentRole, financialSummary } = useApp();
+  const { payments, students, addPayment, addPaymentsBatch, updatePaymentStatus, currentRole, financialSummary } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
@@ -101,17 +106,22 @@ export const PaymentManagement: React.FC = () => {
       ? students 
       : students.filter(s => s.category === batchPay.category);
 
-    targetStudents.forEach(st => {
-      addPayment({
-        studentId: st.id,
-        title: batchPay.title,
-        category: 'tuition',
-        amount: batchPay.amount,
-        dueDate: batchPay.dueDate,
-        status: 'pending',
-        notes: `สร้างใบแจ้งหนี้อัตโนมัติประจำรุ่น ${st.category}`
-      });
-    });
+    if (targetStudents.length === 0) {
+      setToastMessage('ไม่พบนักเรียนในรุ่นที่เลือก');
+      return;
+    }
+
+    const batchItems = targetStudents.map(st => ({
+      studentId: st.id,
+      title: batchPay.title,
+      category: 'tuition' as const,
+      amount: batchPay.amount,
+      dueDate: batchPay.dueDate,
+      status: 'pending' as const,
+      notes: `สร้างใบแจ้งหนี้อัตโนมัติประจำรุ่น ${st.category}`
+    }));
+
+    addPaymentsBatch(batchItems);
 
     setShowBatchModal(false);
     setToastMessage(`สร้างใบเรียกเก็บเงินเรียบร้อยแล้ว จำนวน ${targetStudents.length} รายการ`);
@@ -171,10 +181,10 @@ export const PaymentManagement: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-blue-600" />
-            <h1 className="text-xl font-bold text-slate-900">ระบบการชำระเงินสมาชิก & ใบเสร็จดิจิทัล</h1>
+            <h1 className="text-xl font-bold text-slate-900">ระบบการชำระเงินสมาชิก</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            บันทึกการชำระค่าเรียน ค่าอุปกรณ์แรกเข้า ออกใบเสร็จรับเงิน และติดตามยอดค้างชำระ
+            บันทึกการชำระค่าเรียน ออกใบเสร็จรับเงิน และติดตามยอดค้างชำระ
           </p>
         </div>
 
@@ -220,12 +230,12 @@ export const PaymentManagement: React.FC = () => {
         </div>
 
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
-          <span className="text-xs font-medium text-slate-500">พร้อมเพย์ คลีนิกฟุตบอลยะลา</span>
+          <span className="text-xs font-medium text-slate-500">ถุงเงิน ฟุตบอลคลีนิกยะลา</span>
           <div className="text-base font-bold text-slate-800 mt-1 flex items-center gap-2">
             <QrCode className="w-5 h-5 text-blue-600" />
             <span>081-456-7890</span>
           </div>
-          <span className="text-[11px] text-slate-400">บจก. คลีนิกฟุตบอลยะลา อคาเดมี</span>
+          <span className="text-[11px] text-slate-400">ชื่อบัญชี: นายฟารีส ฆอแด๊ะ</span>
         </div>
       </div>
 
@@ -235,7 +245,7 @@ export const PaymentManagement: React.FC = () => {
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="ค้นหาตามรหัสใบเสร็จ, ชื่อนร., รายการ..."
+            placeholder="ค้นหาตามรหัสใบเสร็จ หรือชื่อนักเรียน"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -253,9 +263,9 @@ export const PaymentManagement: React.FC = () => {
             <button
               key={st.id}
               onClick={() => setSelectedStatus(st.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                 selectedStatus === st.id
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
@@ -265,8 +275,154 @@ export const PaymentManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Payment Transactions Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+      {/* 1. Mobile Card List View (md:hidden) */}
+      <div className="md:hidden space-y-3">
+        {filteredPayments.length === 0 ? (
+          <div className="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-400">
+            <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+            <p className="text-xs">ไม่พบรายการชำระเงินตามเงื่อนไขที่ค้นหา</p>
+          </div>
+        ) : (
+          filteredPayments.map(pay => {
+            const student = students.find(s => s.id === pay.studentId);
+            const isPaid = pay.status === 'paid';
+
+            const categoryLabel = 
+              pay.category === 'registration_fee' ? 'ค่าแรกเข้า' :
+              pay.category === 'tuition' ? 'ค่าเรียนรายเดือน' :
+              pay.category === 'uniform_kit' ? 'ชุด/อุปกรณ์' : 'อื่นๆ';
+
+            const methodLabel = 
+              pay.paymentMethod === 'promptpay' ? 'PromptPay QR' :
+              pay.paymentMethod === 'bank_transfer' ? 'โอนเงินธนาคาร' :
+              pay.paymentMethod === 'cash' ? 'เงินสดที่คลีนิก' :
+              pay.paymentMethod === 'credit_card' ? 'บัตรเครดิต' : '-';
+
+            return (
+              <div 
+                key={pay.id} 
+                className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3"
+              >
+                {/* Card Header: Receipt #, Category & Status Badge */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[11px] font-mono text-blue-600 font-bold bg-blue-50 border border-blue-100 px-2 py-0.5 rounded">
+                      {pay.receiptNumber}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium bg-slate-100 px-1.5 py-0.5 rounded">
+                      {categoryLabel}
+                    </span>
+                  </div>
+                  {isPaid ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 shrink-0">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> ชำระแล้ว
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 shrink-0">
+                      <Clock className="w-3 h-3 text-amber-600" /> รอชำระ
+                    </span>
+                  )}
+                </div>
+
+                {/* Title */}
+                <div className="font-bold text-slate-900 text-sm">
+                  {pay.title}
+                </div>
+
+                {/* Student Info Row */}
+                {student && (
+                  <div className="flex items-center gap-2.5 p-2 bg-slate-50 rounded-lg border border-slate-100">
+                    <img 
+                      src={student.avatarUrl} 
+                      alt={student.fullName}
+                      className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0" 
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-slate-800 text-xs truncate">
+                        {student.fullName} ({student.nickname})
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-mono flex items-center gap-1.5 mt-0.5">
+                        <span>{student.studentCode}</span>
+                        <span>•</span>
+                        <span className="font-semibold text-slate-700">{student.category}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2-Column Info Grid */}
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">จำนวนเงิน</span>
+                    <span className="text-sm font-black text-slate-900 font-mono">
+                      ฿{pay.amount.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-slate-500 block mt-0.5 font-medium">
+                      {methodLabel}
+                    </span>
+                  </div>
+
+                  <div>
+                    {isPaid ? (
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">วันที่ชำระ</span>
+                        <span className="font-bold text-emerald-700 text-xs">{pay.paidDate}</span>
+                        <span className="text-[10px] text-slate-400 block truncate" title={pay.receivedByStaffName || 'เจ้าหน้าที่'}>
+                          ผู้รับ: {pay.receivedByStaffName || 'เจ้าหน้าที่'}
+                        </span>
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">กำหนดชำระ</span>
+                        <span className="font-semibold text-amber-800 text-xs">{pay.dueDate || '-'}</span>
+                        <span className="text-[10px] text-amber-600 block">รอการชำระเงิน</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Card Action Buttons */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
+                  {pay.slipUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setViewingSlipUrl(pay.slipUrl || null)}
+                      className="px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold rounded-lg text-xs flex items-center gap-1 border border-emerald-200 transition-colors cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>ดูสลิป</span>
+                    </button>
+                  )}
+                  {isPaid ? (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPaymentForReceipt(pay)}
+                      className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-lg text-xs flex items-center gap-1 border border-emerald-200 transition-colors cursor-pointer shadow-2xs"
+                    >
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>ใบเสร็จ</span>
+                    </button>
+                  ) : (
+                    currentRole === 'admin_staff' && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenRecordPayment(pay)}
+                        className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>บันทึกจ่ายเงิน</span>
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* 2. Desktop Data Table View (hidden md:block) */}
+      <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
@@ -281,123 +437,151 @@ export const PaymentManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredPayments.map(pay => {
-                const student = students.find(s => s.id === pay.studentId);
-                const isPaid = pay.status === 'paid';
+              {filteredPayments.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                    ไม่พบรายการชำระเงินตามเงื่อนไขที่ค้นหา
+                  </td>
+                </tr>
+              ) : (
+                filteredPayments.map(pay => {
+                  const student = students.find(s => s.id === pay.studentId);
+                  const isPaid = pay.status === 'paid';
 
-                return (
-                  <tr key={pay.id} className="hover:bg-slate-50 transition-colors">
-                    
-                    {/* Item & Code */}
-                    <td className="py-3.5 px-4">
-                      <div className="font-bold text-slate-900">{pay.title}</div>
-                      <div className="text-[11px] font-mono text-blue-600 font-semibold">{pay.receiptNumber}</div>
-                    </td>
+                  const categoryLabel = 
+                    pay.category === 'registration_fee' ? 'ค่าแรกเข้า' :
+                    pay.category === 'tuition' ? 'ค่าเรียนรายเดือน' :
+                    pay.category === 'uniform_kit' ? 'ชุด/อุปกรณ์' : 'อื่นๆ';
 
-                    {/* Student info */}
-                    <td className="py-3.5 px-4">
-                      {student ? (
-                        <div>
-                          <div className="font-bold text-slate-800">
-                            {student.fullName} ({student.nickname})
+                  const methodLabel = 
+                    pay.paymentMethod === 'promptpay' ? 'PromptPay QR' :
+                    pay.paymentMethod === 'bank_transfer' ? 'โอนเงินธนาคาร' :
+                    pay.paymentMethod === 'cash' ? 'เงินสดที่คลีนิก' :
+                    pay.paymentMethod === 'credit_card' ? 'บัตรเครดิต' : '-';
+
+                  return (
+                    <tr key={pay.id} className="hover:bg-slate-50 transition-colors">
+                      {/* Item & Code */}
+                      <td className="py-3.5 px-4">
+                        <div className="font-bold text-slate-900">{pay.title}</div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[11px] font-mono text-blue-600 font-semibold">{pay.receiptNumber}</span>
+                          <span className="text-[10px] text-slate-400">•</span>
+                          <span className="text-[10px] text-slate-500 font-medium">{categoryLabel}</span>
+                        </div>
+                      </td>
+
+                      {/* Student info */}
+                      <td className="py-3.5 px-4">
+                        {student ? (
+                          <div>
+                            <div className="font-bold text-slate-800 flex items-center gap-1">
+                              <span>{student.fullName}</span>
+                              <span className="text-slate-500 font-medium text-xs">({student.nickname})</span>
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-mono">
+                              {student.studentCode} • <span className="font-semibold text-slate-700">{student.category}</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-0.5">
+                              ผู้ปกครอง: {student.parentName} ({student.parentPhone})
+                            </div>
                           </div>
-                          <div className="text-[11px] text-slate-500 font-mono">
-                            {student.studentCode} • {student.category}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-slate-400">ไม่พบนักเรียน</span>
-                      )}
-                    </td>
-
-                    {/* Amount */}
-                    <td className="py-3.5 px-4">
-                      <span className="text-sm font-black text-slate-900">
-                        ฿{pay.amount.toLocaleString()}
-                      </span>
-                    </td>
-
-                    {/* Date */}
-                    <td className="py-3.5 px-4">
-                      {isPaid ? (
-                        <div>
-                          <div className="text-emerald-700 font-bold">{pay.paidDate}</div>
-                          <div className="text-[10px] text-slate-400">รับโดย: {pay.receivedByStaffName || 'เจ้าหน้าที่'}</div>
-                        </div>
-                      ) : (
-                        <div>
-                          <div className="text-amber-800 font-semibold">ครบกำหนด: {pay.dueDate}</div>
-                          <div className="text-[10px] text-slate-400">รอการชำระเงิน</div>
-                        </div>
-                      )}
-                    </td>
-
-                    {/* Method */}
-                    <td className="py-3.5 px-4">
-                      {pay.paymentMethod ? (
-                        <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700">
-                          {pay.paymentMethod === 'promptpay' && 'PromptPay QR'}
-                          {pay.paymentMethod === 'bank_transfer' && 'โอนเงินธนาคาร'}
-                          {pay.paymentMethod === 'cash' && 'เงินสดที่คลีนิก'}
-                          {pay.paymentMethod === 'credit_card' && 'บัตรเครดิต'}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400">-</span>
-                      )}
-                    </td>
-
-                    {/* Status Badge */}
-                    <td className="py-3.5 px-4">
-                      {isPaid ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
-                          <CheckCircle2 className="w-3 h-3" /> ชำระแล้ว
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
-                          <Clock className="w-3 h-3" /> รอชำระ
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {pay.slipUrl && (
-                          <button
-                            onClick={() => setViewingSlipUrl(pay.slipUrl || null)}
-                            className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold rounded-lg text-xs flex items-center gap-1 border border-emerald-200 transition-colors cursor-pointer"
-                            title="ดูหลักฐานสลิปการโอนเงิน"
-                          >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span className="hidden lg:inline">สลิป</span>
-                          </button>
-                        )}
-                        {isPaid ? (
-                          <button
-                            onClick={() => setSelectedPaymentForReceipt(pay)}
-                            className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-lg text-xs flex items-center gap-1 border border-emerald-200 transition-colors cursor-pointer"
-                            title="ดูใบเสร็จรับเงิน"
-                          >
-                            <Printer className="w-3.5 h-3.5" />
-                            <span>ใบเสร็จ</span>
-                          </button>
                         ) : (
-                          currentRole === 'admin_staff' && (
-                            <button
-                              onClick={() => handleOpenRecordPayment(pay)}
-                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
-                            >
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>บันทึกจ่าย</span>
-                            </button>
-                          )
+                          <span className="text-slate-400 italic">ไม่พบนักเรียน</span>
                         )}
-                      </div>
-                    </td>
+                      </td>
 
-                  </tr>
-                );
-              })}
+                      {/* Amount */}
+                      <td className="py-3.5 px-4">
+                        <span className="text-sm font-black text-slate-900 font-mono">
+                          ฿{pay.amount.toLocaleString()}
+                        </span>
+                      </td>
+
+                      {/* Date */}
+                      <td className="py-3.5 px-4">
+                        {isPaid ? (
+                          <div>
+                            <div className="text-emerald-700 font-bold">{pay.paidDate}</div>
+                            <div className="text-[10px] text-slate-400 truncate max-w-[130px]" title={pay.receivedByStaffName || 'เจ้าหน้าที่'}>
+                              รับโดย: {pay.receivedByStaffName || 'เจ้าหน้าที่'}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="text-amber-800 font-semibold">ครบกำหนด: {pay.dueDate || '-'}</div>
+                            <div className="text-[10px] text-amber-600">รอการชำระเงิน</div>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Method */}
+                      <td className="py-3.5 px-4">
+                        {pay.paymentMethod ? (
+                          <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700">
+                            {methodLabel}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </td>
+
+                      {/* Status Badge */}
+                      <td className="py-3.5 px-4">
+                        {isPaid ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> ชำระแล้ว
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">
+                            <Clock className="w-3 h-3 text-amber-600" /> รอชำระ
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {pay.slipUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setViewingSlipUrl(pay.slipUrl || null)}
+                              className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold rounded-lg text-xs flex items-center gap-1 border border-emerald-200 transition-colors cursor-pointer"
+                              title="ดูหลักฐานสลิปการโอนเงิน"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span className="hidden lg:inline">สลิป</span>
+                            </button>
+                          )}
+                          {isPaid ? (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedPaymentForReceipt(pay)}
+                              className="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold rounded-lg text-xs flex items-center gap-1 border border-emerald-200 transition-colors cursor-pointer shadow-2xs"
+                              title="ดู/พิมพ์ใบเสร็จรับเงิน"
+                            >
+                              <Printer className="w-3.5 h-3.5" />
+                              <span>ใบเสร็จ</span>
+                            </button>
+                          ) : (
+                            currentRole === 'admin_staff' && (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenRecordPayment(pay)}
+                                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>บันทึกจ่าย</span>
+                              </button>
+                            )
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
@@ -411,7 +595,7 @@ export const PaymentManagement: React.FC = () => {
             <div className="flex items-center justify-between border-b pb-4">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-6 h-6 text-emerald-600" />
-                <span className="font-bold text-slate-800 text-sm">ใบเสร็จรับเงินอิเล็กทรอนิกส์ (E-Receipt)</span>
+                <span className="font-bold text-slate-800 text-sm">ใบเสร็จรับเงินอิเล็กทรอนิกส์</span>
               </div>
               <button 
                 onClick={() => setSelectedPaymentForReceipt(null)}
@@ -428,9 +612,9 @@ export const PaymentManagement: React.FC = () => {
               <div className="flex justify-between items-start border-b border-slate-200 pb-4">
                 <div>
                   <h2 className="text-base font-extrabold text-slate-900">คลีนิกฟุตบอลยะลา</h2>
-                  <div className="text-[11px] text-slate-500">YALA FOOTBALL CLINIC & ACADEMY</div>
+                  <div className="text-[11px] text-slate-500">CLINIC FOOTBALL YALA</div>
                   <div className="text-[10px] text-slate-500 mt-1 leading-relaxed">
-                    สนามหญ้าเทียมยะลา สเตเดียม อ.เมือง จ.ยะลา 95000<br />
+                    ยะลาสเตเดียม อ.เมือง จ.ยะลา 95000<br />
                     เลขประจำตัวผู้เสียภาษี: 0-9555-69001-23-4 | โทร: 081-456-7890
                   </div>
                 </div>
@@ -453,7 +637,7 @@ export const PaymentManagement: React.FC = () => {
                       <span className="text-[10px] text-slate-400 block font-mono">รหัส: {st.studentCode} | รุ่น: {st.category}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500 block">ผู้ชำระเงิน (ผู้ปกครอง):</span>
+                      <span className="text-slate-500 block">ผู้ชำระเงิน:</span>
                       <span className="font-bold text-slate-900">{st.parentName}</span>
                       <span className="text-[10px] text-slate-400 block">เบอร์ติดต่อ: {st.parentPhone}</span>
                     </div>
@@ -466,7 +650,7 @@ export const PaymentManagement: React.FC = () => {
                 <table className="w-full text-xs">
                   <thead className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
                     <tr>
-                      <th className="py-2.5 px-3 text-left">ลำดับ / รายการ</th>
+                      <th className="py-2.5 px-3 text-left">รายการ</th>
                       <th className="py-2.5 px-3 text-right">จำนวนเงิน (บาท)</th>
                     </tr>
                   </thead>

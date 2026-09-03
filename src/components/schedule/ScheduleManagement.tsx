@@ -102,10 +102,10 @@ export const ScheduleManagement: React.FC<{
         <div>
           <div className="flex items-center gap-2">
             <CalendarIcon className="w-5 h-5 text-blue-600" />
-            <h1 className="text-xl font-bold text-slate-900">ระบบจัดการตารางการฝึกซ้อม & หลักสูตร</h1>
+            <h1 className="text-xl font-bold text-slate-900">จัดการตารางการฝึกซ้อม</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            กำหนดการฝึกซ้อมประจำสัปดาห์ สถานที่ฝึกซ้อมใน จ.ยะลา และมอบหมายโค้ชผู้รับผิดชอบ
+            กำหนดการฝึกซ้อมประจำวัน สถานที่ และโค้ชผู้รับผิดชอบ
           </p>
         </div>
 
@@ -221,7 +221,7 @@ export const ScheduleManagement: React.FC<{
                   {/* Topic & Drills */}
                   <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-100 text-xs space-y-1.5">
                     <div>
-                      <span className="font-bold text-emerald-900">หัวข้อการฝึกซ้อม: </span>
+                      <span className="font-bold text-emerald-900">หัวข้อ: </span>
                       <span className="text-slate-700">{sch.topic}</span>
                     </div>
                     {sch.drillsSummary && (
@@ -239,8 +239,69 @@ export const ScheduleManagement: React.FC<{
 
                 </div>
 
-                {/* Right: Coach info & Actions */}
-                <div className="flex lg:flex-col items-center lg:items-end justify-between gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 shrink-0">
+                {/* Mobile View: Coach info & Actions (md:hidden) */}
+                <div className="md:hidden pt-3 border-t border-slate-100 flex flex-col gap-2.5">
+                  {headCoach && (
+                    <div className="flex items-center justify-between gap-2 bg-slate-50/90 px-3 py-2 rounded-xl border border-slate-200/80">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <img 
+                          src={headCoach.avatarUrl} 
+                          alt={headCoach.fullName} 
+                          className="w-8 h-8 rounded-full object-cover border border-emerald-500 shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-bold text-slate-900 truncate">{headCoach.fullName}</span>
+                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/70 shrink-0">
+                              {headCoach.license}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-medium">ผู้ฝึกสอนหลัก</div>
+                        </div>
+                      </div>
+
+                      {currentRole === 'admin_staff' && (
+                        <div className="flex items-center gap-0.5 shrink-0">
+                          <button
+                            onClick={() => setEditingSchedule(sch)}
+                            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/70 rounded-lg transition-colors"
+                            title="แก้ไข"
+                            aria-label="แก้ไข"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`คุณต้องการลบตารางการซ้อม "${sch.title}" หรือไม่?`)) {
+                                deleteSchedule(sch.id);
+                              }
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            title="ลบ"
+                            aria-label="ลบ"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {(currentRole === 'admin_staff' || currentRole === 'coach') && (
+                    <button
+                      onClick={() => {
+                        if (onTakeAttendance) onTakeAttendance(sch.id);
+                      }}
+                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 shadow-xs transition-all"
+                    >
+                      <ClipboardCheck className="w-4 h-4" />
+                      <span>เช็คชื่อการฝึกซ้อม</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Tablet / Desktop View: Coach info & Actions (hidden md:flex) */}
+                <div className="hidden md:flex lg:flex-col items-center lg:items-end justify-between gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 shrink-0">
                   
                   {headCoach && (
                     <div className="flex items-center gap-2.5 bg-slate-50 px-3 py-2 rounded-xl border border-slate-200/80">
@@ -250,7 +311,7 @@ export const ScheduleManagement: React.FC<{
                         className="w-9 h-9 rounded-full object-cover border border-emerald-500"
                       />
                       <div className="text-left">
-                        <div className="text-[10px] text-slate-400 font-semibold">หัวหน้าผู้ฝึกสอน</div>
+                        <div className="text-[10px] text-slate-400 font-semibold">ผู้ฝึกสอน</div>
                         <div className="text-xs font-bold text-slate-900">{headCoach.fullName}</div>
                         <div className="text-[10px] text-emerald-700 font-medium">{headCoach.license}</div>
                       </div>
@@ -266,7 +327,7 @@ export const ScheduleManagement: React.FC<{
                         className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 shadow-xs transition-all"
                       >
                         <ClipboardCheck className="w-4 h-4" />
-                        <span>เช็คชื่อเข้าเรียน</span>
+                        <span>เช็คชื่อ</span>
                       </button>
                     )}
 
@@ -330,7 +391,7 @@ export const ScheduleManagement: React.FC<{
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">รุ่นอายุ (Age Category)</label>
+                  <label className="block font-bold text-slate-700 mb-1">รุ่นอายุ</label>
                   <div className="flex gap-2">
                     {(['U-6', 'U-8'] as AgeCategory[]).map(cat => {
                       const isSelected = newSch.category.includes(cat);
@@ -385,16 +446,18 @@ export const ScheduleManagement: React.FC<{
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">สนามฝึกซ้อม (Venue)</label>
+                <label className="block font-semibold text-slate-700 mb-1">สนามฝึกซ้อม</label>
                 <select
                   value={newSch.venue}
                   onChange={(e) => setNewSch({ ...newSch, venue: e.target.value })}
                   className="w-full px-3 py-2 border rounded-lg"
                 >
-                  <option value="สนามหญ้าเทียมยะลา สเตเดียม (สนาม A)">สนามหญ้าเทียมยะลา สเตเดียม (สนาม A)</option>
-                  <option value="สนามหญ้าเทียมยะลา สเตเดียม (สนาม B)">สนามหญ้าเทียมยะลา สเตเดียม (สนาม B)</option>
-                  <option value="สนามฟุตบอลเทศบาลนครยะลา (สนามหญ้าจริง)">สนามฟุตบอลเทศบาลนครยะลา (สนามหญ้าจริง)</option>
-                  <option value="ศูนย์เยาวชนเทศบาลนครยะลา">ศูนย์เยาวชนเทศบาลนครยะลา</option>
+                  <option value="ํYala Stadium (สนาม A)">Yala Stadium (สนาม A)</option>
+                  <option value="Yala Stadium (สนาม B)">Yala Stadium (สนาม B)</option>
+                  <option value="ํCN Stadium (สนาม A)">CN Stadium (สนาม A)</option>
+                  <option value="ํCN Stadium (สนาม B)">CN Stadium (สนาม B)</option>
+                  <option value="ํMS Stadium (สนาม B)">MS Stadium (สนาม B)</option>
+                  <option value="ํMS Stadium (สนาม B)">MS Stadium (สนาม B)</option>
                 </select>
               </div>
 
@@ -429,7 +492,7 @@ export const ScheduleManagement: React.FC<{
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">เนื้อหาหลักสูตรการสอน (Topic)</label>
+                <label className="block font-semibold text-slate-700 mb-1">เนื้อหาหลักสูตรการสอน</label>
                 <input
                   type="text"
                   placeholder="เช่น Ball Mastery, 1v1 Defending, Small-sided Games"
@@ -440,7 +503,7 @@ export const ScheduleManagement: React.FC<{
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">ขั้นตอนและแบบฝึก (Drills Summary)</label>
+                <label className="block font-semibold text-slate-700 mb-1">ขั้นตอนและแบบฝึก</label>
                 <textarea
                   rows={2}
                   placeholder="เช่น วอร์มอัพ 15 นาที + ดริลล์ส่งบอล 20 นาที + แมตช์เพลย์ 25 นาที"
@@ -520,7 +583,7 @@ export const ScheduleManagement: React.FC<{
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">รุ่นอายุ (Age Category)</label>
+                  <label className="block font-bold text-slate-700 mb-1">รุ่นอายุ</label>
                   <div className="flex gap-2">
                     {(['U-6', 'U-8'] as AgeCategory[]).map(cat => {
                       const isSelected = editingSchedule.category.includes(cat);
@@ -559,7 +622,7 @@ export const ScheduleManagement: React.FC<{
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">หัวหน้าผู้ฝึกสอน (Head Coach)</label>
+                  <label className="block font-bold text-slate-700 mb-1">หัวหน้าผู้ฝึกสอน</label>
                   <select
                     value={editingSchedule.headCoachId}
                     onChange={(e) => setEditingSchedule({ ...editingSchedule, headCoachId: e.target.value })}
@@ -576,16 +639,18 @@ export const ScheduleManagement: React.FC<{
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block font-bold text-slate-700 mb-1">สนามฝึกซ้อม (Venue)</label>
+                  <label className="block font-bold text-slate-700 mb-1">สนามฝึกซ้อม</label>
                   <select
                     value={editingSchedule.venue}
                     onChange={(e) => setEditingSchedule({ ...editingSchedule, venue: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="สนามหญ้าเทียมยะลา สเตเดียม (สนาม A)">สนามหญ้าเทียมยะลา สเตเดียม (สนาม A)</option>
-                    <option value="สนามหญ้าเทียมยะลา สเตเดียม (สนาม B)">สนามหญ้าเทียมยะลา สเตเดียม (สนาม B)</option>
-                    <option value="สนามฟุตบอลเทศบาลนครยะลา (สนามหญ้าจริง)">สนามฟุตบอลเทศบาลนครยะลา (สนามหญ้าจริง)</option>
-                    <option value="ศูนย์เยาวชนเทศบาลนครยะลา">ศูนย์เยาวชนเทศบาลนครยะลา</option>
+                  <option value="ํYala Stadium (สนาม A)">Yala Stadium (สนาม A)</option>
+                  <option value="Yala Stadium (สนาม B)">Yala Stadium (สนาม B)</option>
+                  <option value="ํCN Stadium (สนาม A)">CN Stadium (สนาม A)</option>
+                  <option value="ํCN Stadium (สนาม B)">CN Stadium (สนาม B)</option>
+                  <option value="ํMS Stadium (สนาม B)">MS Stadium (สนาม B)</option>
+                  <option value="ํMS Stadium (สนาม B)">MS Stadium (สนาม B)</option>
                   </select>
                 </div>
 
@@ -596,10 +661,10 @@ export const ScheduleManagement: React.FC<{
                     onChange={(e) => setEditingSchedule({ ...editingSchedule, status: e.target.value as any })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="scheduled">🟢 นัดหมายล่วงหน้า (Scheduled)</option>
-                    <option value="in_progress">🟡 กำลังดำเนินการฝึกซ้อม (In Progress)</option>
-                    <option value="completed">⚪ เสร็จสิ้นแล้ว (Completed)</option>
-                    <option value="cancelled">🔴 ยกเลิก (Cancelled)</option>
+                    <option value="scheduled">🟢 นัดหมายล่วงหน้า</option>
+                    <option value="in_progress">🟡 กำลังดำเนินการฝึกซ้อม</option>
+                    <option value="completed">⚪ เสร็จสิ้นแล้ว</option>
+                    <option value="cancelled">🔴 ยกเลิก</option>
                   </select>
                 </div>
               </div>
@@ -635,7 +700,7 @@ export const ScheduleManagement: React.FC<{
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">เนื้อหาหลักสูตรการสอน (Topic)</label>
+                <label className="block font-bold text-slate-700 mb-1">เนื้อหาหลักสูตรการสอน</label>
                 <input
                   type="text"
                   placeholder="เช่น Ball Mastery, 1v1 Defending, Small-sided Games"
@@ -646,7 +711,7 @@ export const ScheduleManagement: React.FC<{
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">ขั้นตอนและแบบฝึก (Drills Summary)</label>
+                <label className="block font-bold text-slate-700 mb-1">ขั้นตอนและแบบฝึก</label>
                 <textarea
                   rows={2}
                   placeholder="เช่น วอร์มอัพ 15 นาที + ดริลล์ส่งบอล 20 นาที + แมตช์เพลย์ 25 นาที"
@@ -657,7 +722,7 @@ export const ScheduleManagement: React.FC<{
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 mb-1">ข้อความแจ้งเตือนผู้ปกครอง (Notes)</label>
+                <label className="block font-bold text-slate-700 mb-1">ข้อความแจ้งเตือนผู้ปกครอง</label>
                 <input
                   type="text"
                   placeholder="เช่น ให้นักเรียนสวมเสื้อสีเขียว และเตรียมน้ำดื่มส่วนตัว"

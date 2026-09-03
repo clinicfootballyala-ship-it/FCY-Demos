@@ -1355,6 +1355,18 @@ export async function saveSinglePaymentToSupabase(p: PaymentTransaction): Promis
 
     console.warn(`[Supabase Payment Save] Attempt ${attempts} error:`, error);
 
+    // 0. Check for unique constraint violation on receipt_number
+    if (error.code === '23505' || error.message?.includes('payments_receipt_number_key') || error.message?.includes('receipt_number')) {
+      const currentYear = new Date().getFullYear();
+      const isInv = row.receipt_number && String(row.receipt_number).startsWith('INV');
+      const prefix = isInv ? 'INV' : 'REC';
+      const randomSeq = Math.floor(1000 + Math.random() * 9000);
+      const newReceiptNumber = `${prefix}-YLA-${currentYear}-${randomSeq}`;
+      console.info(`[Supabase] Unique constraint on receipt_number hit. Regenerating receipt_number to '${newReceiptNumber}' and retrying...`);
+      row.receipt_number = newReceiptNumber;
+      continue;
+    }
+
     // 1. Check for missing column in schema cache or table
     const missingCol = extractMissingColumnFromError(error);
     if (missingCol) {

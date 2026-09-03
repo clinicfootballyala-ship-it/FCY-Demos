@@ -16,7 +16,8 @@ import {
   Boxes,
   Activity,
   Save,
-  Check
+  Check,
+  AlertCircle
 } from 'lucide-react';
 
 const CATEGORY_NAMES: Record<string, string> = {
@@ -121,10 +122,10 @@ export const AssetManagement: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-blue-600" />
-            <h1 className="text-xl font-bold text-slate-900">ระบบจัดการอุปกรณ์ & ครุภัณฑ์ (Asset Management)</h1>
+            <h1 className="text-xl font-bold text-slate-900">ระบบจัดการอุปกรณ์ & ครุภัณฑ์</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            ตรวจนับสต็อกลูกฟุตบอล กรวยฝึกซ้อม เสื้อเอี๊ยม อุปกรณ์ปฐมพยาบาล อัพเดทสถานะ และสถานที่จัดเก็บ
+            ตรวจนับสต็อก รายการชำรุด และสถานที่จัดเก็บ
           </p>
         </div>
 
@@ -199,8 +200,121 @@ export const AssetManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Asset Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
+      {/* 1. Mobile Asset Card List View (md:hidden) */}
+      <div className="md:hidden space-y-3">
+        {filteredAssets.length === 0 ? (
+          <div className="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-400">
+            <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+            <p className="text-xs">ไม่พบรายการอุปกรณ์ที่ค้นหา</p>
+          </div>
+        ) : (
+          filteredAssets.map(item => (
+            <div 
+              key={item.id} 
+              className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3"
+            >
+              {/* Card Header: Asset Code, Category & Condition Badge */}
+              <div className="flex items-start justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] font-mono text-blue-600 font-bold bg-blue-50 border border-blue-100 px-2 py-0.5 rounded">
+                    {item.assetCode}
+                  </span>
+                  <span className="text-[10px] text-slate-600 font-bold bg-slate-100 px-1.5 py-0.5 rounded">
+                    {CATEGORY_NAMES[item.category] || item.category}
+                  </span>
+                </div>
+
+                {item.condition === 'new' && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 shrink-0">
+                    ใหม่เอี่ยม (New)
+                  </span>
+                )}
+                {(item.condition === 'good' || item.condition === 'ready') && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800 shrink-0">
+                    สภาพดี (Good)
+                  </span>
+                )}
+                {(item.condition === 'fair' || item.condition === 'needs_repair') && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 shrink-0">
+                    พอใช้/ต้องตรวจ (Fair)
+                  </span>
+                )}
+                {item.condition === 'damaged' && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 shrink-0">
+                    ชำรุด (Damaged)
+                  </span>
+                )}
+              </div>
+
+              {/* Title & Notes */}
+              <div>
+                <div className="font-bold text-slate-900 text-sm">{item.name}</div>
+                {item.notes && (
+                  <div className="text-xs text-slate-500 line-clamp-2 mt-0.5">{item.notes}</div>
+                )}
+              </div>
+
+              {/* 2-Column Info Grid */}
+              <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100">
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">คงเหลือ / ทั้งหมด</span>
+                  <div className="font-black text-slate-900 text-sm mt-0.5">
+                    <span className="text-emerald-700">{item.availableQuantity}</span> / {item.totalQuantity} {item.unit}
+                  </div>
+                  {item.damagedQuantity > 0 && (
+                    <div className="text-[10px] text-rose-600 font-bold mt-0.5">
+                      ชำรุด {item.damagedQuantity} {item.unit}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">สถานที่จัดเก็บ</span>
+                  <div className="flex items-center gap-1 text-slate-700 font-medium text-xs mt-0.5">
+                    <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                    <span className="truncate" title={item.location}>{item.location}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 block mt-1">
+                    ตรวจนับ: <span className="text-slate-600 font-medium">{item.lastCheckedDate}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Actions for mobile card */}
+              {(currentRole === 'admin_staff' || currentRole === 'coach') && (
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingAsset({ ...item })}
+                    className="px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer border border-blue-100"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    <span>แก้ไข</span>
+                  </button>
+
+                  {currentRole === 'admin_staff' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (confirm(`คุณต้องการลบอุปกรณ์ "${item.name}" หรือไม่?`)) {
+                          deleteAsset(item.id);
+                        }
+                      }}
+                      className="px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer border border-rose-100"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>ลบ</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* 2. Tablet / Desktop Asset Table View (hidden md:block) */}
+      <div className="hidden md:block bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
@@ -218,6 +332,7 @@ export const AssetManagement: React.FC = () => {
               {filteredAssets.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-8 text-center text-slate-400">
+                    <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
                     ไม่พบรายการอุปกรณ์ที่ค้นหา
                   </td>
                 </tr>

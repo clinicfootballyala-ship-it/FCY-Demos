@@ -28,7 +28,8 @@ import {
   ShieldCheck,
   UserPlus,
   Database,
-  UploadCloud
+  UploadCloud,
+  AlertCircle
 } from 'lucide-react';
 import { UserRole, RolePermissions, PermissionLevel, UserAccount, AuthSessionLog } from '../../types';
 import { cleanDigits, formatThaiIdCard, formatPhone10 } from '../../utils/validation';
@@ -189,13 +190,13 @@ export const AccessControlManagement: React.FC = () => {
             </div>
             <div>
               <h1 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                <span>ระบบบริหารผู้ใช้งานและการกำหนดสิทธิ์เข้าถึง (RBAC & Security)</span>
+                <span>จัดการผู้ใช้งานและสิทธิ์การเข้าถึง</span>
                 <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-semibold">
                   Access Control Matrix
                 </span>
               </h1>
               <p className="text-xs text-slate-500">
-                กำหนดสิทธิ์การเข้าถึง 11 โมดูลตามบทบาท (แอดมิน, โค้ช, ผู้ปกครอง) จัดการบัญชีผู้ใช้ และตรวจบันทึกความปลอดภัย
+                กำหนดสิทธิ์การเข้าถึง 11 โมดูลตามบทบาท จัดการบัญชีผู้ใช้ และตรวจบันทึกความปลอดภัย
               </p>
             </div>
           </div>
@@ -317,8 +318,114 @@ export const AccessControlManagement: React.FC = () => {
             </div>
           </div>
 
-          {/* Matrix Table */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+          {/* 1. Mobile Matrix Card List View (md:hidden) */}
+          <div className="md:hidden space-y-3">
+            {moduleDefinitions.map((mod) => {
+              const adminLevel = rolePermissions.admin_staff[mod.key] || 'none';
+              const coachLevel = rolePermissions.coach[mod.key] || 'none';
+              const parentLevel = rolePermissions.student_parent[mod.key] || 'none';
+
+              return (
+                <div 
+                  key={mod.key}
+                  className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3"
+                >
+                  {/* Module Title */}
+                  <div className="flex items-start gap-2.5">
+                    <span className="text-xl shrink-0 mt-0.5">{mod.icon}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-slate-800 text-sm">{mod.nameTh}</div>
+                      <div className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{mod.description}</div>
+                    </div>
+                  </div>
+
+                  {/* 3 Role Selectors */}
+                  <div className="space-y-2 pt-2 border-t border-slate-100 text-xs">
+                    {/* Admin */}
+                    <div className="p-2.5 rounded-lg bg-blue-50/60 border border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                      <div className="flex items-center gap-1.5 text-blue-800 font-semibold shrink-0">
+                        <Shield className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        <span>แอดมิน / เจ้าหน้าที่</span>
+                      </div>
+                      <select
+                        value={adminLevel}
+                        onChange={(e) => handlePermissionChange('admin_staff', mod.key, e.target.value as PermissionLevel)}
+                        className={`w-full sm:w-auto py-1 px-2 rounded-md border text-xs font-semibold focus:outline-none focus:ring-1 cursor-pointer transition-colors ${
+                          adminLevel === 'full' 
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : adminLevel === 'view_only'
+                            ? 'bg-blue-50 text-blue-800 border-blue-200'
+                            : adminLevel === 'view_own'
+                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : 'bg-rose-50 text-rose-800 border-rose-200'
+                        }`}
+                      >
+                        <option value="full">🟢 สิทธิ์เต็ม (Full)</option>
+                        <option value="view_only">🔵 ดูส่วนกลาง (View All)</option>
+                        <option value="view_own">🟡 ดูของตนเอง (View Own)</option>
+                        <option value="none">🔴 ปิดการเข้าถึง (None)</option>
+                      </select>
+                    </div>
+
+                    {/* Coach */}
+                    <div className="p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                      <div className="flex items-center gap-1.5 text-emerald-800 font-semibold shrink-0">
+                        <UserCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>โค้ชผู้ฝึกสอน</span>
+                      </div>
+                      <select
+                        value={coachLevel}
+                        onChange={(e) => handlePermissionChange('coach', mod.key, e.target.value as PermissionLevel)}
+                        className={`w-full sm:w-auto py-1 px-2 rounded-md border text-xs font-semibold focus:outline-none focus:ring-1 cursor-pointer transition-colors ${
+                          coachLevel === 'full' 
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : coachLevel === 'view_only'
+                            ? 'bg-blue-50 text-blue-800 border-blue-200'
+                            : coachLevel === 'view_own'
+                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : 'bg-rose-50 text-rose-800 border-rose-200'
+                        }`}
+                      >
+                        <option value="full">🟢 สิทธิ์เต็ม (Full)</option>
+                        <option value="view_only">🔵 ดูส่วนกลาง (View All)</option>
+                        <option value="view_own">🟡 ดูของตนเอง (View Own)</option>
+                        <option value="none">🔴 ปิดการเข้าถึง (None)</option>
+                      </select>
+                    </div>
+
+                    {/* Parent */}
+                    <div className="p-2.5 rounded-lg bg-amber-50/60 border border-amber-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                      <div className="flex items-center gap-1.5 text-amber-800 font-semibold shrink-0">
+                        <GraduationCap className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span>ผู้ปกครอง/นักเรียน</span>
+                      </div>
+                      <select
+                        value={parentLevel}
+                        onChange={(e) => handlePermissionChange('student_parent', mod.key, e.target.value as PermissionLevel)}
+                        className={`w-full sm:w-auto py-1 px-2 rounded-md border text-xs font-semibold focus:outline-none focus:ring-1 cursor-pointer transition-colors ${
+                          parentLevel === 'full' 
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                            : parentLevel === 'view_only'
+                            ? 'bg-blue-50 text-blue-800 border-blue-200'
+                            : parentLevel === 'view_own'
+                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                            : 'bg-rose-50 text-rose-800 border-rose-200'
+                        }`}
+                      >
+                        <option value="full">🟢 สิทธิ์เต็ม (Full)</option>
+                        <option value="view_only">🔵 ดูส่วนกลาง (View All)</option>
+                        <option value="view_own">🟡 ดูของตนเอง (View Own)</option>
+                        <option value="none">🔴 ปิดการเข้าถึง (None)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* 2. Tablet / Desktop Matrix Table (hidden md:block) */}
+          <div className="hidden md:block bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -510,8 +617,174 @@ export const AccessControlManagement: React.FC = () => {
             </div>
           )}
 
-          {/* Users Table */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+          {/* 1. Mobile Users Card List View (md:hidden) */}
+          <div className="md:hidden space-y-3">
+            {filteredUsers.length === 0 ? (
+              <div className="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-400">
+                <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                <p className="text-xs">ไม่พบบัญชีผู้ใช้ตามเงื่อนไขที่ค้นหา</p>
+              </div>
+            ) : (
+              filteredUsers.map((user) => {
+                const isCoach = user.role === 'coach';
+                const isParent = user.role === 'student_parent';
+                const isAdmin = user.role === 'admin_staff';
+
+                // Find linked coach or student
+                const linkedCoach = user.coachId ? coaches.find(c => c.id === user.coachId) : null;
+                const linkedStudent = user.studentIds && user.studentIds[0] ? students.find(s => s.id === user.studentIds![0]) : null;
+
+                return (
+                  <div 
+                    key={user.id}
+                    className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3"
+                  >
+                    {/* Top Row: User Avatar, Name, Role & Status */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <img 
+                          src={user.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'} 
+                          alt="" 
+                          className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0" 
+                        />
+                        <div className="min-w-0">
+                          <div className="font-bold text-slate-800 text-xs flex items-center gap-1.5 truncate">
+                            <span className="truncate">{user.fullName}</span>
+                            {currentUser?.id === user.id && (
+                              <span className="text-[9px] px-1.5 py-0.2 bg-blue-100 text-blue-700 rounded font-bold shrink-0">คุณ</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                              isAdmin 
+                                ? 'bg-blue-100 text-blue-700' 
+                                : isCoach 
+                                ? 'bg-emerald-100 text-emerald-700' 
+                                : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {isAdmin ? 'แอดมิน/เจ้าหน้าที่' : isCoach ? 'โค้ชผู้ฝึกสอน' : 'ผู้ปกครอง/นักเรียน'}
+                            </span>
+                            <span className="text-[10px] text-slate-400 truncate">{user.title}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Status Toggle Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newStatus = user.status === 'active' ? 'suspended' : 'active';
+                          updateUserAccount(user.id, { status: newStatus });
+                          triggerToast(`เปลี่ยนสถานะของ ${user.fullName} เป็น ${newStatus === 'active' ? 'ปกติ' : 'ระงับการใช้งาน'}`);
+                        }}
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 transition-all ${
+                          user.status === 'active' 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                        }`}
+                      >
+                        {user.status === 'active' ? (
+                          <>
+                            <Check className="w-3 h-3 text-emerald-600" />
+                            <span>ปกติ</span>
+                          </>
+                        ) : (
+                          <>
+                            <Ban className="w-3 h-3 text-rose-600" />
+                            <span>ระงับ</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Linked Entity Info */}
+                    {linkedCoach ? (
+                      <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-100 text-xs">
+                        <UserCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="truncate">เชื่อมโยง: <strong>{linkedCoach.fullName}</strong> ({linkedCoach.coachCode})</span>
+                      </div>
+                    ) : linkedStudent ? (
+                      <div className="flex items-center gap-1.5 text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-lg border border-amber-100 text-xs">
+                        <GraduationCap className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span className="truncate">เชื่อมโยง: <strong>{linkedStudent.fullName}</strong> ({linkedStudent.studentCode})</span>
+                      </div>
+                    ) : null}
+
+                    {/* 2-Column Info Grid */}
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">ชื่อผู้ใช้ (Login)</span>
+                        <span className="font-mono text-slate-800 font-bold text-xs">{user.username}</span>
+                        <span className="text-[10px] text-slate-400 block font-mono mt-0.5 truncate">
+                          ID: {user.id}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">เข้าสู่ระบบล่าสุด</span>
+                        <span className="text-slate-700 text-xs font-medium block truncate">
+                          {user.lastLogin || 'ยังไม่เคยเข้าใช้'}
+                        </span>
+                        <span className="text-[10px] text-slate-400 block mt-0.5 truncate">
+                          โทร: {user.phone || '-'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card Actions */}
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => loginAsDemo(user.role, user.id)}
+                        className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-lg text-xs flex items-center gap-1 border border-blue-200 transition-colors"
+                        title="สลับเป็นผู้ใช้นี้ (Fast Login)"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>สลับผู้ใช้</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleResetPassword(user.id, user.fullName)}
+                        className="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-semibold rounded-lg text-xs flex items-center gap-1 border border-amber-200 transition-colors"
+                        title="รีเซ็ตรหัสผ่าน"
+                      >
+                        <KeyRound className="w-3.5 h-3.5" />
+                        <span>รีเซ็ตรหัส</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setEditingUser(user)}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 transition-colors"
+                        title="แก้ไขข้อมูลผู้ใช้"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีของ "${user.fullName}"?`)) {
+                            deleteUserAccount(user.id);
+                            triggerToast(`ลบบัญชี ${user.fullName} เรียบร้อยแล้ว`);
+                          }
+                        }}
+                        disabled={currentUser?.id === user.id}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 bg-rose-50 hover:bg-rose-100 transition-colors disabled:opacity-30"
+                        title="ลบบัญชี"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* 2. Tablet / Desktop Users Table (hidden md:block) */}
+          <div className="hidden md:block bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -526,164 +799,173 @@ export const AccessControlManagement: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
-                  {filteredUsers.map((user) => {
-                    const isCoach = user.role === 'coach';
-                    const isParent = user.role === 'student_parent';
-                    const isAdmin = user.role === 'admin_staff';
+                  {filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-slate-400">
+                        <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                        ไม่พบบัญชีผู้ใช้ตามเงื่อนไขที่ค้นหา
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((user) => {
+                      const isCoach = user.role === 'coach';
+                      const isParent = user.role === 'student_parent';
+                      const isAdmin = user.role === 'admin_staff';
 
-                    // Find linked coach or student
-                    const linkedCoach = user.coachId ? coaches.find(c => c.id === user.coachId) : null;
-                    const linkedStudent = user.studentIds && user.studentIds[0] ? students.find(s => s.id === user.studentIds![0]) : null;
+                      // Find linked coach or student
+                      const linkedCoach = user.coachId ? coaches.find(c => c.id === user.coachId) : null;
+                      const linkedStudent = user.studentIds && user.studentIds[0] ? students.find(s => s.id === user.studentIds![0]) : null;
 
-                    return (
-                      <tr key={user.id} className="hover:bg-slate-50/60 transition-colors">
-                        
-                        {/* User Profile */}
-                        <td className="py-3 px-4">
-                          <div className="flex items-center gap-3">
-                            <img 
-                              src={user.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'} 
-                              alt="" 
-                              className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" 
-                            />
-                            <div>
-                              <div className="font-bold text-slate-800 flex items-center gap-1.5">
-                                <span>{user.fullName}</span>
-                                {currentUser?.id === user.id && (
-                                  <span className="text-[10px] px-1.5 py-0.2 bg-blue-100 text-blue-700 rounded font-medium">คุณ</span>
-                                )}
+                      return (
+                        <tr key={user.id} className="hover:bg-slate-50/60 transition-colors">
+                          
+                          {/* User Profile */}
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-3">
+                              <img 
+                                src={user.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'} 
+                                alt="" 
+                                className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" 
+                              />
+                              <div>
+                                <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                                  <span>{user.fullName}</span>
+                                  {currentUser?.id === user.id && (
+                                    <span className="text-[10px] px-1.5 py-0.2 bg-blue-100 text-blue-700 rounded font-medium">คุณ</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5 mt-0.5">
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
+                                    isAdmin 
+                                      ? 'bg-blue-100 text-blue-700' 
+                                      : isCoach 
+                                      ? 'bg-emerald-100 text-emerald-700' 
+                                      : 'bg-amber-100 text-amber-700'
+                                  }`}>
+                                    {isAdmin ? 'ผู้ดูแล/เจ้าหน้าที่' : isCoach ? 'โค้ชผู้ฝึกสอน' : 'ผู้ปกครอง/นักเรียน'}
+                                  </span>
+                                  <span className="text-[11px] text-slate-400">{user.title}</span>
+                                </div>
                               </div>
-                              <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${
-                                  isAdmin 
-                                    ? 'bg-blue-100 text-blue-700' 
-                                    : isCoach 
-                                    ? 'bg-emerald-100 text-emerald-700' 
-                                    : 'bg-amber-100 text-amber-700'
-                                }`}>
-                                  {isAdmin ? 'ผู้ดูแล/เจ้าหน้าที่' : isCoach ? 'โค้ชผู้ฝึกสอน' : 'ผู้ปกครอง/นักเรียน'}
-                                </span>
-                                <span className="text-[11px] text-slate-400">{user.title}</span>
+                            </div>
+                          </td>
+
+                          {/* Username */}
+                          <td className="py-3 px-4">
+                            <div className="font-mono text-slate-700 font-semibold">{user.username}</div>
+                            <div className="text-[11px] text-slate-400 font-mono">ID: {user.id}</div>
+                          </td>
+
+                          {/* Linked Entity */}
+                          <td className="py-3 px-4">
+                            {linkedCoach ? (
+                              <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/80 px-2.5 py-1 rounded-md border border-emerald-100 w-fit">
+                                <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>{linkedCoach.fullName} ({linkedCoach.coachCode})</span>
                               </div>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Username */}
-                        <td className="py-3 px-4">
-                          <div className="font-mono text-slate-700 font-semibold">{user.username}</div>
-                          <div className="text-[11px] text-slate-400 font-mono">ID: {user.id}</div>
-                        </td>
-
-                        {/* Linked Entity */}
-                        <td className="py-3 px-4">
-                          {linkedCoach ? (
-                            <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50/80 px-2.5 py-1 rounded-md border border-emerald-100 w-fit">
-                              <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>{linkedCoach.fullName} ({linkedCoach.coachCode})</span>
-                            </div>
-                          ) : linkedStudent ? (
-                            <div className="flex items-center gap-1.5 text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-md border border-amber-100 w-fit">
-                              <GraduationCap className="w-3.5 h-3.5 text-amber-600" />
-                              <span>{linkedStudent.fullName} ({linkedStudent.studentCode})</span>
-                            </div>
-                          ) : (
-                            <span className="text-slate-400">-</span>
-                          )}
-                        </td>
-
-                        {/* Contact */}
-                        <td className="py-3 px-4">
-                          <div className="text-slate-700">{user.phone || '-'}</div>
-                          <div className="text-[11px] text-slate-400">{user.email || '-'}</div>
-                        </td>
-
-                        {/* Last Login */}
-                        <td className="py-3 px-4">
-                          <div className="text-slate-600">{user.lastLogin || 'ยังไม่เคยเข้าใช้'}</div>
-                          <div className="text-[10px] text-slate-400">สร้างเมื่อ {user.createdAt}</div>
-                        </td>
-
-                        {/* Status */}
-                        <td className="py-3 px-4 text-center">
-                          <button
-                            onClick={() => {
-                              const newStatus = user.status === 'active' ? 'suspended' : 'active';
-                              updateUserAccount(user.id, { status: newStatus });
-                              triggerToast(`เปลี่ยนสถานะของ ${user.fullName} เป็น ${newStatus === 'active' ? 'ปกติ' : 'ระงับการใช้งาน'}`);
-                            }}
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ${
-                              user.status === 'active' 
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
-                                : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
-                            }`}
-                          >
-                            {user.status === 'active' ? (
-                              <>
-                                <Check className="w-3 h-3" />
-                                <span>ปกติ</span>
-                              </>
+                            ) : linkedStudent ? (
+                              <div className="flex items-center gap-1.5 text-amber-800 bg-amber-50/80 px-2.5 py-1 rounded-md border border-amber-100 w-fit">
+                                <GraduationCap className="w-3.5 h-3.5 text-amber-600" />
+                                <span>{linkedStudent.fullName} ({linkedStudent.studentCode})</span>
+                              </div>
                             ) : (
-                              <>
-                                <Ban className="w-3 h-3" />
-                                <span>ระงับ</span>
-                              </>
+                              <span className="text-slate-400">-</span>
                             )}
-                          </button>
-                        </td>
+                          </td>
 
-                        {/* Actions */}
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            
-                            {/* Fast Login As */}
-                            <button
-                              onClick={() => loginAsDemo(user.role, user.id)}
-                              title="สลับเป็นผู้ใช้นี้ (Impersonate / Fast Login)"
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                            >
-                              <ShieldCheck className="w-4 h-4" />
-                            </button>
+                          {/* Contact */}
+                          <td className="py-3 px-4">
+                            <div className="text-slate-700">{user.phone || '-'}</div>
+                            <div className="text-[11px] text-slate-400">{user.email || '-'}</div>
+                          </td>
 
-                            {/* Reset Password */}
-                            <button
-                              onClick={() => handleResetPassword(user.id, user.fullName)}
-                              title="รีเซ็ตรหัสผ่านชั่วคราว"
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
-                            >
-                              <KeyRound className="w-4 h-4" />
-                            </button>
+                          {/* Last Login */}
+                          <td className="py-3 px-4">
+                            <div className="text-slate-600">{user.lastLogin || 'ยังไม่เคยเข้าใช้'}</div>
+                            <div className="text-[10px] text-slate-400">สร้างเมื่อ {user.createdAt}</div>
+                          </td>
 
-                            {/* Edit */}
-                            <button
-                              onClick={() => setEditingUser(user)}
-                              title="แก้ไขข้อมูลผู้ใช้"
-                              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
-                            >
-                              <Edit3 className="w-4 h-4" />
-                            </button>
-
-                            {/* Delete */}
+                          {/* Status */}
+                          <td className="py-3 px-4 text-center">
                             <button
                               onClick={() => {
-                                if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีของ "${user.fullName}"?`)) {
-                                  deleteUserAccount(user.id);
-                                  triggerToast(`ลบบัญชี ${user.fullName} เรียบร้อยแล้ว`);
-                                }
+                                const newStatus = user.status === 'active' ? 'suspended' : 'active';
+                                updateUserAccount(user.id, { status: newStatus });
+                                triggerToast(`เปลี่ยนสถานะของ ${user.fullName} เป็น ${newStatus === 'active' ? 'ปกติ' : 'ระงับการใช้งาน'}`);
                               }}
-                              disabled={currentUser?.id === user.id}
-                              title="ลบบัญชี"
-                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-30"
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all ${
+                                user.status === 'active' 
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
+                                  : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100'
+                              }`}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              {user.status === 'active' ? (
+                                <>
+                                  <Check className="w-3 h-3" />
+                                  <span>ปกติ</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Ban className="w-3 h-3" />
+                                  <span>ระงับ</span>
+                                </>
+                              )}
                             </button>
+                          </td>
 
-                          </div>
-                        </td>
+                          {/* Actions */}
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              
+                              {/* Fast Login As */}
+                              <button
+                                onClick={() => loginAsDemo(user.role, user.id)}
+                                title="สลับเป็นผู้ใช้นี้ (Impersonate / Fast Login)"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                              >
+                                <ShieldCheck className="w-4 h-4" />
+                              </button>
 
-                      </tr>
-                    );
-                  })}
+                              {/* Reset Password */}
+                              <button
+                                onClick={() => handleResetPassword(user.id, user.fullName)}
+                                title="รีเซ็ตรหัสผ่านชั่วคราว"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                              >
+                                <KeyRound className="w-4 h-4" />
+                              </button>
+
+                              {/* Edit */}
+                              <button
+                                onClick={() => setEditingUser(user)}
+                                title="แก้ไขข้อมูลผู้ใช้"
+                                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+
+                              {/* Delete */}
+                              <button
+                                onClick={() => {
+                                  if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีของ "${user.fullName}"?`)) {
+                                    deleteUserAccount(user.id);
+                                    triggerToast(`ลบบัญชี ${user.fullName} เรียบร้อยแล้ว`);
+                                  }
+                                }}
+                                disabled={currentUser?.id === user.id}
+                                title="ลบบัญชี"
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-30"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+
+                            </div>
+                          </td>
+
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -716,7 +998,75 @@ export const AccessControlManagement: React.FC = () => {
             </button>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
+          {/* 1. Mobile Audit Logs Card List View (md:hidden) */}
+          <div className="md:hidden space-y-3">
+            {sessionLogs.length === 0 ? (
+              <div className="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-400">
+                <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                <p className="text-xs">ยังไม่มีรายการบันทึกความปลอดภัย</p>
+              </div>
+            ) : (
+              sessionLogs.map((log) => {
+                const actionLabelMap: Record<AuthSessionLog['action'], { label: string; bg: string; text: string }> = {
+                  login: { label: 'เข้าสู่ระบบ (Login)', bg: 'bg-emerald-50 border-emerald-200', text: 'text-emerald-700' },
+                  logout: { label: 'ออกจากระบบ (Logout)', bg: 'bg-slate-100 border-slate-200', text: 'text-slate-700' },
+                  role_switch: { label: 'สลับบทบาท (Role Switch)', bg: 'bg-blue-50 border-blue-200', text: 'text-blue-700' },
+                  permission_update: { label: 'แก้ไขสิทธิ์ (Permission Update)', bg: 'bg-amber-50 border-amber-200', text: 'text-amber-700' }
+                };
+
+                const actionConfig = actionLabelMap[log.action] || actionLabelMap.login;
+
+                return (
+                  <div 
+                    key={log.id}
+                    className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3"
+                  >
+                    {/* Header: User Name, Role & Action Badge */}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-bold text-slate-800 text-xs">{log.userName}</div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">Role: {log.role}</div>
+                      </div>
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border shrink-0 ${actionConfig.bg} ${actionConfig.text}`}>
+                        {actionConfig.label}
+                      </span>
+                    </div>
+
+                    {/* 2-Column Details Grid */}
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">วันและเวลา</span>
+                        <span className="font-mono text-slate-700 text-xs font-semibold block truncate mt-0.5">
+                          {log.timestamp}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-slate-400 block font-medium">อุปกรณ์ & เบราว์เซอร์</span>
+                        <div className="flex items-center gap-1 text-slate-700 text-xs mt-0.5">
+                          {log.device?.includes('Mobile') ? (
+                            <Smartphone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          ) : (
+                            <Laptop className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          )}
+                          <span className="truncate">{log.device || 'Desktop Browser'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer: IP & Location */}
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+                      <span>IP Address:</span>
+                      <span className="text-slate-700 font-medium">{log.ipAddress || '182.52.204.88 (Yala, TH)'}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* 2. Tablet / Desktop Audit Logs Table (hidden md:block) */}
+          <div className="hidden md:block bg-white border border-slate-200 rounded-2xl shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -729,42 +1079,51 @@ export const AccessControlManagement: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
-                  {sessionLogs.map((log) => {
-                    const actionLabelMap: Record<AuthSessionLog['action'], { label: string; bg: string; text: string }> = {
-                      login: { label: 'เข้าสู่ระบบ (Login)', bg: 'bg-emerald-50 border-emerald-200', text: 'text-emerald-700' },
-                      logout: { label: 'ออกจากระบบ (Logout)', bg: 'bg-slate-100 border-slate-200', text: 'text-slate-700' },
-                      role_switch: { label: 'สลับบทบาท (Role Switch)', bg: 'bg-blue-50 border-blue-200', text: 'text-blue-700' },
-                      permission_update: { label: 'แก้ไขสิทธิ์ (Permission Update)', bg: 'bg-amber-50 border-amber-200', text: 'text-amber-700' }
-                    };
+                  {sessionLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-12 text-center text-slate-400">
+                        <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                        ยังไม่มีรายการบันทึกความปลอดภัย
+                      </td>
+                    </tr>
+                  ) : (
+                    sessionLogs.map((log) => {
+                      const actionLabelMap: Record<AuthSessionLog['action'], { label: string; bg: string; text: string }> = {
+                        login: { label: 'เข้าสู่ระบบ (Login)', bg: 'bg-emerald-50 border-emerald-200', text: 'text-emerald-700' },
+                        logout: { label: 'ออกจากระบบ (Logout)', bg: 'bg-slate-100 border-slate-200', text: 'text-slate-700' },
+                        role_switch: { label: 'สลับบทบาท (Role Switch)', bg: 'bg-blue-50 border-blue-200', text: 'text-blue-700' },
+                        permission_update: { label: 'แก้ไขสิทธิ์ (Permission Update)', bg: 'bg-amber-50 border-amber-200', text: 'text-amber-700' }
+                      };
 
-                    const actionConfig = actionLabelMap[log.action] || actionLabelMap.login;
+                      const actionConfig = actionLabelMap[log.action] || actionLabelMap.login;
 
-                    return (
-                      <tr key={log.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="py-3 px-4 font-mono text-slate-600">
-                          {log.timestamp}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="font-bold text-slate-800">{log.userName}</div>
-                          <div className="text-[11px] text-slate-400 font-mono">Role: {log.role}</div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className={`inline-block px-2.5 py-1 rounded-md text-[11px] font-semibold border ${actionConfig.bg} ${actionConfig.text}`}>
-                            {actionConfig.label}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-slate-600">
-                          <div className="flex items-center gap-1.5">
-                            {log.device?.includes('Mobile') ? <Smartphone className="w-3.5 h-3.5 text-slate-400" /> : <Laptop className="w-3.5 h-3.5 text-slate-400" />}
-                            <span>{log.device || 'Desktop Browser'}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 font-mono text-slate-500">
-                          {log.ipAddress || '182.52.204.88 (Yala, TH)'}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                      return (
+                        <tr key={log.id} className="hover:bg-slate-50/60 transition-colors">
+                          <td className="py-3 px-4 font-mono text-slate-600">
+                            {log.timestamp}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="font-bold text-slate-800">{log.userName}</div>
+                            <div className="text-[11px] text-slate-400 font-mono">Role: {log.role}</div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-block px-2.5 py-1 rounded-md text-[11px] font-semibold border ${actionConfig.bg} ${actionConfig.text}`}>
+                              {actionConfig.label}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-600">
+                            <div className="flex items-center gap-1.5">
+                              {log.device?.includes('Mobile') ? <Smartphone className="w-3.5 h-3.5 text-slate-400" /> : <Laptop className="w-3.5 h-3.5 text-slate-400" />}
+                              <span>{log.device || 'Desktop Browser'}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 font-mono text-slate-500">
+                            {log.ipAddress || '182.52.204.88 (Yala, TH)'}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>

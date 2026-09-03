@@ -12,7 +12,6 @@ import {
   Package, 
   Award, 
   ScrollText,
-  UserPlus,
   X,
   Shield,
   Lock,
@@ -211,7 +210,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {organizationConfig?.name || 'YALA FOOTBALL CLINIC'}
             </span>
             <span className="text-[10px] text-blue-400 font-medium truncate">
-              {organizationConfig?.nameTh || 'คลีนิกฟุตบอลยะลา'}
+              {organizationConfig?.nameTh || 'ฟุตบอลคลีนิกยะลา'}
             </span>
             <span className="text-[9px] text-slate-400 truncate">
               {organizationConfig?.tagline || 'Youth Academy'}
@@ -270,27 +269,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Action CTA Button */}
       <div className="px-4 pb-2 space-y-1.5">
-        {onOpenRegister && (
-          <button
-            onClick={() => {
-              if (onClose) onClose();
-              onOpenRegister();
-            }}
-            className="w-full py-2.5 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-md active:scale-98"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>รับสมัครนักเรียนใหม่</span>
-          </button>
-        )}
-
         <button
           onClick={() => {
             if (onClose) onClose();
             setShowOrgConfigModal(true);
           }}
-          className="w-full py-2 px-3 bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 hover:text-white rounded-xl text-[11px] font-semibold flex items-center justify-center gap-2 transition-colors border border-slate-700/60"
+          className="w-full py-2.5 px-3 bg-slate-800/90 hover:bg-slate-700/90 text-slate-300 hover:text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-colors border border-slate-700/60 shadow-xs"
         >
-          <Building2 className="w-3.5 h-3.5 text-blue-400" />
+          <Building2 className="w-4 h-4 text-blue-400" />
           <span>ตั้งค่าองค์กร & ตราสโมสร</span>
         </button>
       </div>

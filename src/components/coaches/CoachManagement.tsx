@@ -213,10 +213,10 @@ export const CoachManagement: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <Briefcase className="w-5 h-5 text-emerald-600" />
-            <h1 className="text-xl font-bold text-slate-900">ระบบจัดการโค้ชผู้ฝึกสอน & บริหารงานบุคคล (HR)</h1>
+            <h1 className="text-xl font-bold text-slate-900">จัดการผู้ฝึกสอน & สต๊าฟ</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            ทำเนียบโค้ชและสต๊าฟฟุตบอลคลีนิกฟุตบอลยะลา เลขบัตรประชาชน ใบอนุญาต License สัญญาจ้าง และอัตราเงินเดือน
+            ใบอนุญาต License สัญญาจ้าง และอัตราเงินเดือน
           </p>
         </div>
 
@@ -458,7 +458,7 @@ export const CoachManagement: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">ชื่อเรียก / ชื่อเล่น</label>
+                  <label className="block font-semibold text-slate-700 mb-1">ชื่อเล่น</label>
                   <input
                     type="text"
                     required
@@ -610,7 +610,7 @@ export const CoachManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">ประวัติและผลงานย่อ (Bio)</label>
+                <label className="block font-semibold text-slate-700 mb-1">ประวัติและผลงานย่อ</label>
                 <textarea
                   rows={2}
                   placeholder="เช่น อดีตนักฟุตบอลสโมสรยะลา เอฟซี, ประสบการณ์โค้ชเยาวชน 6 ปี"
@@ -701,7 +701,7 @@ export const CoachManagement: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block font-semibold text-slate-700 mb-1">ชื่อเรียก / ชื่อเล่น</label>
+                  <label className="block font-semibold text-slate-700 mb-1">ชื่อเล่น</label>
                   <input
                     type="text"
                     required
@@ -844,7 +844,7 @@ export const CoachManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-700 mb-1">ประวัติและผลงานย่อ (Bio)</label>
+                <label className="block font-semibold text-slate-700 mb-1">ประวัติและผลงานย่อ</label>
                 <textarea
                   rows={2}
                   value={editingCoach.bio}

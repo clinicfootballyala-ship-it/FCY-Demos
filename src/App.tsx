@@ -169,24 +169,9 @@ const MainAppContent: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-600"></span>
                 <span className="font-semibold text-slate-700">
-                  {organizationConfig?.nameTh || 'คลีนิกฟุตบอลยะลา'} • {organizationConfig?.name || 'Yala Football Clinic'}
+                  {organizationConfig?.nameTh || 'คลีนิกฟุตบอลยะลา'} 
                 </span>
-                <span>• FA Thailand Standard</span>
-              </div>
-              <div className="flex items-center gap-4 text-[11px] text-slate-400">
-                <span>{organizationConfig?.address?.split(' ')[0] || 'สนามหญ้าเทียมยะลา'}</span>
-                <span>•</span>
-                <button onClick={() => setShowOrgConfigModal(true)} className="hover:text-blue-600 underline font-medium">
-                  แก้ไขข้อมูลองค์กร & โลโก้
-                </button>
-                <span>•</span>
-                <button onClick={() => handleNavigate('access_control')} className="hover:text-blue-600 underline">
-                  ระบบรักษาความปลอดภัย & สิทธิ์ RBAC
-                </button>
-                <span>•</span>
-                <button onClick={() => handleNavigate('terms')} className="hover:text-blue-600 underline">
-                  ระเบียบและข้อตกลง
-                </button>
+                <span>• ๋หลักสูตร Japan Football Academy </span>
               </div>
             </footer>
           </div>

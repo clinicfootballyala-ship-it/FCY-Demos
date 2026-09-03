@@ -185,10 +185,10 @@ export const MemberManagement: React.FC<{
         <div>
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-emerald-600" />
-            <h1 className="text-xl font-bold text-slate-900">ระบบบริหารจัดการสมาชิก & นักเรียน</h1>
+            <h1 className="text-xl font-bold text-slate-900">ระบบบริหารจัดการสมาชิก</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            ทะเบียนประวัตินักฟุตบอลเยาวชน ข้อมูลผู้ปกครอง และสถานะการเรียนคลีนิกฟุตบอลยะลา
+            ข้อมูลสมาชิก ข้อมูลผู้ปกครอง และบัตรประจำตัว
           </p>
         </div>
 
@@ -207,7 +207,7 @@ export const MemberManagement: React.FC<{
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="ค้นหาด้วยชื่อ, ชื่อเล่น, รหัส (YFC-xxx), เลขบัตร ปชช., โรงเรียน หรือเบอร์โทร..."
+            placeholder="ค้นหาด้วยชื่อ, ชื่อเล่น, รหัส,  เลขบัตร "
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-xs border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -281,11 +281,11 @@ export const MemberManagement: React.FC<{
                     <span className="font-semibold text-slate-700 truncate block">{student.parentName}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[10px]">เบอร์โทร (10 หลัก)</span>
+                    <span className="text-slate-400 block text-[10px]">เบอร์โทร</span>
                     <span className="font-mono font-semibold text-slate-700 block">{formatPhone10(student.parentPhone)}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 block text-[10px]">ขนาดเสื้อ (รอบอก/ยาว)</span>
+                    <span className="text-slate-400 block text-[10px]">ขนาดเสื้อ</span>
                     <span className="font-semibold text-emerald-800 block">
                       {student.jerseyChestCm ? `อก ${student.jerseyChestCm} / ยาว ${student.jerseyLengthCm || '-'} ซม.` : student.jerseySize}
                     </span>
@@ -301,7 +301,7 @@ export const MemberManagement: React.FC<{
                 {student.idCardNumber && (
                   <div className="text-[10px] font-mono text-slate-500 flex items-center gap-1 mb-2 px-1">
                     <CreditCard className="w-3 h-3 text-slate-400" />
-                    <span>ปชช. นักเรียน: {formatThaiIdCard(student.idCardNumber)}</span>
+                    <span>เลขบัตรประชาชน: {formatThaiIdCard(student.idCardNumber)}</span>
                   </div>
                 )}
               </div>
@@ -408,13 +408,13 @@ export const MemberManagement: React.FC<{
                     <span className="font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 inline-block">{selectedStudentForView.bloodType || 'O'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block">เลขบัตร ปชช. นักเรียน:</span>
+                    <span className="text-slate-500 block">เลขบัตรประชาชน:</span>
                     <span className="font-mono font-bold text-slate-800">
                       {selectedStudentForView.idCardNumber ? formatThaiIdCard(selectedStudentForView.idCardNumber) : 'ยังไม่ระบุ'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block">ขนาดเสื้อ (รอบอก/ยาว):</span>
+                    <span className="text-slate-500 block">ขนาดเสื้อ:</span>
                     <span className="font-bold text-emerald-800">
                       {selectedStudentForView.jerseyChestCm ? `อก ${selectedStudentForView.jerseyChestCm} ซม. / ยาว ${selectedStudentForView.jerseyLengthCm || '-'} ซม.` : selectedStudentForView.jerseySize}
                     </span>
@@ -437,10 +437,10 @@ export const MemberManagement: React.FC<{
                 <div className="font-bold text-slate-900 mb-2 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1.5">
                     <Phone className="w-4 h-4 text-emerald-600" />
-                    <span>ข้อมูลผู้ปกครองและช่องทางติดต่อ</span>
+                    <span>ข้อมูลผู้ปกครอง</span>
                   </div>
                   {selectedStudentForView.parentAvatarUrl && (
-                    <span className="text-[10px] text-emerald-600 font-semibold">มีรูปถ่ายยืนยันตัวตนผู้ปกครอง</span>
+                    <span className="text-[10px] text-emerald-600 font-semibold">มีรูปถ่าย</span>
                   )}
                 </div>
 
@@ -454,23 +454,23 @@ export const MemberManagement: React.FC<{
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
                     <div>
-                      <span className="text-slate-500 block">ผู้ปกครอง ({selectedStudentForView.parentRelationship}):</span>
+                      <span className="text-slate-500 block">ความสัมพันธ์ ({selectedStudentForView.parentRelationship}):</span>
                       <span className="font-bold text-slate-800">{selectedStudentForView.parentName}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500 block">เลขบัตร ปชช. ผู้ปกครอง:</span>
+                      <span className="text-slate-500 block">เลขบัตรประชาชน:</span>
                       <span className="font-mono font-bold text-slate-800">
                         {selectedStudentForView.parentIdCardNumber ? formatThaiIdCard(selectedStudentForView.parentIdCardNumber) : 'ยังไม่ระบุ'}
                       </span>
                     </div>
                     <div>
-                      <span className="text-slate-500 block">เบอร์โทรศัพท์ (10 หลัก):</span>
+                      <span className="text-slate-500 block">เบอร์โทรศัพท์:</span>
                       <span className="font-mono font-bold text-emerald-700">
                         {formatPhone10(selectedStudentForView.parentPhone)} (LINE: {selectedStudentForView.parentLineId || '-'})
                       </span>
                     </div>
                     <div>
-                      <span className="text-slate-500 block">อีเมลผู้ปกครอง:</span>
+                      <span className="text-slate-500 block">อีเมล:</span>
                       <span className="font-semibold text-slate-800">
                         {selectedStudentForView.parentEmail ? (
                           <span className="text-blue-700">{selectedStudentForView.parentEmail}</span>
@@ -583,7 +583,7 @@ export const MemberManagement: React.FC<{
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">ชื่อ-นามสกุล นักเรียน <span className="text-rose-500">*</span></label>
+                    <label className="block font-semibold text-slate-700 mb-1">ชื่อ-นามสกุล <span className="text-rose-500">*</span></label>
                     <input
                       type="text"
                       required
@@ -605,7 +605,7 @@ export const MemberManagement: React.FC<{
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">เลขบัตรประชาชนนักเรียน (13 หลัก)</label>
+                    <label className="block font-semibold text-slate-700 mb-1">เลขบัตรประชาชน</label>
                     <input
                       type="text"
                       maxLength={17}
@@ -617,7 +617,7 @@ export const MemberManagement: React.FC<{
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">รุ่นอายุ (Category)</label>
+                    <label className="block font-semibold text-slate-700 mb-1">รุ่นอายุ</label>
                     <select
                       value={editingStudent.category}
                       onChange={(e) => setEditingStudent({ ...editingStudent, category: e.target.value as AgeCategory })}
@@ -759,7 +759,7 @@ export const MemberManagement: React.FC<{
                 <div className="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-2 mt-2">
                   <div className="font-bold text-emerald-950 flex items-center gap-1.5">
                     <Shirt className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>ขนาดเสื้อและรองเท้า (Equipment Size)</span>
+                    <span>ขนาดเสื้อและรองเท้า</span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <div>
@@ -820,13 +820,13 @@ export const MemberManagement: React.FC<{
               <div className="border border-slate-200 rounded-xl p-4 space-y-3 bg-slate-50/50">
                 <div className="font-bold text-slate-800 flex items-center gap-1.5 text-xs border-b border-slate-200 pb-2">
                   <Phone className="w-4 h-4 text-emerald-600" />
-                  <span>ข้อมูลผู้ปกครองและการติดต่อ (Parent & Contact)</span>
+                  <span>ข้อมูลผู้ปกครอง</span>
                 </div>
 
                 {/* Parent Avatar Upload Field */}
                 <div className="p-3 bg-white rounded-xl border border-slate-200">
                   <PhotoUploadField
-                    label="รูปถ่ายผู้ปกครอง (Parent Photo)"
+                    label="รูปถ่ายผู้ปกครอง"
                     value={editingStudent.parentAvatarUrl || ''}
                     onChange={(url) => setEditingStudent({ ...editingStudent, parentAvatarUrl: url })}
                     helperText="อัปโหลดรูปภาพผู้ปกครองสำหรับระบุตัวตนและบัตรสมาชิกดิจิทัล"
@@ -836,7 +836,7 @@ export const MemberManagement: React.FC<{
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">ชื่อผู้ปกครอง <span className="text-rose-500">*</span></label>
+                    <label className="block font-semibold text-slate-700 mb-1">ชื่อ-นามสกุล<span className="text-rose-500">*</span></label>
                     <input
                       type="text"
                       required
@@ -861,7 +861,7 @@ export const MemberManagement: React.FC<{
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">เลขบัตร ปชช. ผู้ปกครอง (13 หลัก)</label>
+                    <label className="block font-semibold text-slate-700 mb-1">เลขบัตรประชาชน</label>
                     <input
                       type="text"
                       maxLength={17}
@@ -874,7 +874,7 @@ export const MemberManagement: React.FC<{
 
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">
-                      เบอร์โทรศัพท์ผู้ปกครอง (10 หลัก) <span className="text-rose-500">*</span>
+                      เบอร์โทรศัพท์<span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="tel"
@@ -888,7 +888,7 @@ export const MemberManagement: React.FC<{
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">อีเมลผู้ปกครอง (Email)</label>
+                    <label className="block font-semibold text-slate-700 mb-1">อีเมล</label>
                     <input
                       type="email"
                       value={editingStudent.parentEmail || ''}
@@ -910,7 +910,7 @@ export const MemberManagement: React.FC<{
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">อาชีพผู้ปกครอง</label>
+                    <label className="block font-semibold text-slate-700 mb-1">อาชีพ</label>
                     <input
                       type="text"
                       value={editingStudent.parentOccupation || ''}
@@ -978,7 +978,7 @@ export const MemberManagement: React.FC<{
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
-                      <span>บันทึกการแก้ไขและอัปเดต</span>
+                      <span>บันทึกการแก้ไข</span>
                     </>
                   )}
                 </button>

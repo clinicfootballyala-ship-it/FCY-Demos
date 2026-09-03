@@ -2,7 +2,7 @@ import { Student, Coach, TrainingSchedule, AttendanceRecord, SkillEvaluation, Pa
 
 export const DEFAULT_ORGANIZATION_CONFIG: OrganizationConfig = {
   name: 'YALA FOOTBALL CLINIC',
-  nameTh: 'ศูนย์พัฒนาทักษะฟุตบอลเยาวชนจังหวัดยะลา',
+  nameTh: 'ฟุตบอลคลีนิกยะลา',
   tagline: 'Youth Football Academy & Grassroots Excellence',
   logoUrl: 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=200&auto=format&fit=crop&q=80',
   shortName: 'YFC',

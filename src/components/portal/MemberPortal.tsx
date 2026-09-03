@@ -326,21 +326,110 @@ export const MemberPortal: React.FC<{
       </div>
 
       {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-1 bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs overflow-x-auto">
+      {/* 1. Mobile Sub-Tabs Navigation (md:hidden) */}
+      <div className="md:hidden">
+        <div className="grid grid-cols-5 gap-1 p-1 bg-white rounded-2xl border border-slate-200 shadow-xs">
+          {[
+            { 
+              id: 'overview' as const, 
+              mobileLabel: 'ภาพรวม', 
+              icon: Users,
+              badgeText: null,
+              badgeType: 'neutral'
+            },
+            { 
+              id: 'payments' as const, 
+              mobileLabel: 'การเงิน', 
+              icon: CreditCard,
+              alert: pendingPayments.length > 0,
+              badgeText: pendingPayments.length > 0 ? `${pendingPayments.length}` : '0',
+              badgeType: pendingPayments.length > 0 ? 'alert' : 'success'
+            },
+            { 
+              id: 'attendance' as const, 
+              mobileLabel: 'เวลาเรียน', 
+              icon: Calendar,
+              badgeText: `${attendanceRate}%`,
+              badgeType: 'neutral'
+            },
+            { 
+              id: 'skills' as const, 
+              mobileLabel: 'ทักษะ', 
+              icon: Trophy,
+              badgeText: latestEvaluation ? latestEvaluation.overallGrade : null,
+              badgeType: 'grade'
+            },
+            { 
+              id: 'terms' as const, 
+              mobileLabel: 'ข้อตกลง', 
+              icon: ShieldCheck,
+              badgeText: activeStudent?.acceptedTerms ? 'ยินยอม' : 'รอ',
+              badgeType: activeStudent?.acceptedTerms ? 'success' : 'alert'
+            }
+          ].map(tab => {
+            const Icon = tab.icon;
+            const isActive = activeSubTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                id={`mobile-subtab-${tab.id}`}
+                onClick={() => setActiveSubTab(tab.id)}
+                className={`relative flex flex-col items-center justify-center py-2 px-0.5 rounded-xl text-center transition-all ${
+                  isActive
+                    ? 'bg-slate-900 text-white shadow-xs font-bold'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                }`}
+              >
+                {/* Icon with alert dot */}
+                <div className="relative mb-0.5">
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-600'}`} />
+                  {tab.alert && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white animate-pulse" />
+                  )}
+                </div>
+                
+                {/* Short Label */}
+                <span className="text-[10px] leading-tight truncate w-full">
+                  {tab.mobileLabel}
+                </span>
+
+                {/* Status Indicator Tag */}
+                {tab.badgeText && (
+                  <span className={`mt-0.5 text-[8px] font-mono font-bold px-1 rounded leading-tight ${
+                    isActive 
+                      ? 'bg-white/20 text-white' 
+                      : tab.badgeType === 'alert' 
+                        ? 'bg-rose-100 text-rose-700' 
+                        : tab.badgeType === 'success' 
+                          ? 'bg-emerald-100 text-emerald-700' 
+                          : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {tab.badgeText}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 2. Tablet / Desktop Sub-Tabs Navigation (hidden md:flex) */}
+      <div className="hidden md:flex items-center gap-1.5 bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs overflow-x-auto">
         {[
-          { id: 'overview', label: 'ภาพรวม & กิจกรรม', icon: Users },
-          { id: 'payments', label: `การเงิน & ค่าเล่าเรียน (${pendingPayments.length > 0 ? `ค้าง ${pendingPayments.length}` : 'เรียบร้อย'})`, icon: CreditCard, alert: pendingPayments.length > 0 },
-          { id: 'attendance', label: `เวลาเรียน (${attendanceRate}%)`, icon: Calendar },
-          { id: 'skills', label: 'ผลประเมินทักษะ 4 ด้านหลัก', icon: Trophy },
-          { id: 'terms', label: 'ระเบียบ & ข้อตกลงคลีนิก', icon: ShieldCheck }
+          { id: 'overview' as const, label: 'ภาพรวม & กิจกรรม', icon: Users },
+          { id: 'payments' as const, label: `การเงิน & ค่าเล่าเรียน (${pendingPayments.length > 0 ? `ค้าง ${pendingPayments.length}` : 'เรียบร้อย'})`, icon: CreditCard, alert: pendingPayments.length > 0 },
+          { id: 'attendance' as const, label: `เวลาเรียน (${attendanceRate}%)`, icon: Calendar },
+          { id: 'skills' as const, label: 'ผลประเมินทักษะ 4 ด้านหลัก', icon: Trophy },
+          { id: 'terms' as const, label: 'ระเบียบ & ข้อตกลงคลีนิก', icon: ShieldCheck }
         ].map(tab => {
           const Icon = tab.icon;
           const isActive = activeSubTab === tab.id;
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveSubTab(tab.id as any)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+              id={`desktop-subtab-${tab.id}`}
+              onClick={() => setActiveSubTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
                 isActive
                   ? 'bg-slate-900 text-white shadow-xs'
                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'

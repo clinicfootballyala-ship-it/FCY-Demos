@@ -39,7 +39,7 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
   onClose, 
   onSuccessCreated 
 }) => {
-  const { addStudent, setActiveTab, clinicTerms } = useApp();
+  const { addStudent, setActiveTab, clinicTerms, organizationConfig } = useApp();
 
   const [step, setStep] = useState<number>(1);
   const [errorMessage, setErrorMessage] = useState<string>('');
@@ -284,12 +284,23 @@ export const RegistrationModal: React.FC<RegistrationModalProps> = ({
         {/* Header */}
         <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow-xs">
-              YFC
-            </div>
+            {organizationConfig?.logoUrl ? (
+              <div className="w-10 h-10 rounded-lg overflow-hidden bg-white p-0.5 border border-slate-700 shrink-0">
+                <img 
+                  src={organizationConfig.logoUrl} 
+                  alt="Logo" 
+                  className="w-full h-full object-contain"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            ) : (
+              <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow-xs shrink-0">
+                {organizationConfig?.shortName || 'YFC'}
+              </div>
+            )}
             <div>
-              <h2 className="text-base font-bold text-white">ใบสมัครลงทะเบียนเรียน • คลีนิกฟุตบอลยะลา</h2>
-              <p className="text-xs text-slate-400">Yala Football Clinic & Youth Academy Registration</p>
+              <h2 className="text-base font-bold text-white">ใบสมัครลงทะเบียนเรียน • {organizationConfig?.nameTh || 'คลีนิกฟุตบอลยะลา'}</h2>
+              <p className="text-xs text-slate-400">{organizationConfig?.name || 'Yala Football Clinic & Youth Academy Registration'}</p>
             </div>
           </div>
           <button 

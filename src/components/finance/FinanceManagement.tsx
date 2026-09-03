@@ -16,7 +16,8 @@ import {
   CreditCard,
   PieChart as PieIcon,
   X,
-  FileSpreadsheet
+  FileSpreadsheet,
+  AlertCircle
 } from 'lucide-react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 
@@ -91,10 +92,10 @@ export const FinanceManagement: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <Receipt className="w-5 h-5 text-blue-600" />
-            <h1 className="text-xl font-bold text-slate-900">ระบบบันทึกค่าใช้จ่าย & บัญชีรายรับ-รายจ่าย</h1>
+            <h1 className="text-xl font-bold text-slate-900">ระบบบันทึกค่าใช้จ่าย</h1>
           </div>
           <p className="text-xs text-slate-500 mt-1">
-            เชื่อมต่อรายรับอัตโนมัติจากการชำระค่าเรียนของสมาชิก ประมวลผลร่วมกับรายจ่ายดำเนินงานคลีนิกฟุตบอลยะลา
+            เชื่อมต่อรายรับอัตโนมัติจากการชำระค่าเรียนของสมาชิก ประมวลผลร่วมกับรายจ่ายดำเนินงาน
           </p>
         </div>
 
@@ -279,8 +280,88 @@ export const FinanceManagement: React.FC = () => {
         </div>
       </div>
 
-      {/* Expenses Table */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      {/* 1. Mobile Expenses Card List View (md:hidden) */}
+      <div className="md:hidden space-y-3">
+        {filteredExpenses.length === 0 ? (
+          <div className="bg-white p-8 rounded-2xl border border-slate-200/80 text-center text-slate-400">
+            <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+            <p className="text-xs">ไม่พบรายการค่าใช้จ่ายตามเงื่อนไขที่ค้นหา</p>
+          </div>
+        ) : (
+          filteredExpenses.map(exp => {
+            const methodLabel = 
+              exp.paymentMethod === 'promptpay' ? 'PromptPay QR' :
+              exp.paymentMethod === 'bank_transfer' ? 'โอนเงินธนาคาร' :
+              exp.paymentMethod === 'cash' ? 'เงินสด' :
+              exp.paymentMethod === 'credit_card' ? 'บัตรเครดิต' : exp.paymentMethod;
+
+            return (
+              <div 
+                key={exp.id}
+                className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs space-y-3"
+              >
+                {/* Header: Code, Category & Amount */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[11px] font-mono text-rose-700 font-bold bg-rose-50 border border-rose-100 px-2 py-0.5 rounded">
+                      {exp.expenseCode}
+                    </span>
+                    <span className="text-[10px] text-amber-900 font-bold bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                      {EXPENSE_CATEGORY_NAMES[exp.category] || exp.category}
+                    </span>
+                  </div>
+                  <span className="font-black text-rose-600 text-sm font-mono shrink-0">
+                    -฿{exp.amount.toLocaleString()}
+                  </span>
+                </div>
+
+                {/* Title */}
+                <div className="font-bold text-slate-900 text-sm">
+                  {exp.title}
+                </div>
+
+                {/* 2-Column Info Grid */}
+                <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-100">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">วันที่จ่าย</span>
+                    <span className="font-semibold text-slate-800 text-xs">{exp.date}</span>
+                    <span className="text-[10px] text-slate-500 block mt-1">
+                      ช่องทาง: <span className="font-medium text-slate-700">{methodLabel}</span>
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-[10px] text-slate-400 block font-medium">จ่ายให้แก่</span>
+                    <span className="font-bold text-slate-800 text-xs truncate block" title={exp.paidTo}>{exp.paidTo}</span>
+                    <span className="text-[10px] text-slate-500 block mt-1 truncate" title={exp.recordedBy}>
+                      ผู้บันทึก: <span className="font-medium text-slate-700">{exp.recordedBy}</span>
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(`คุณต้องการลบรายการ "${exp.title}" หรือไม่?`)) {
+                        deleteExpense(exp.id);
+                      }
+                    }}
+                    className="px-3 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer border border-rose-100"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>ลบรายการ</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* 2. Tablet / Desktop Expenses Table View (hidden md:block) */}
+      <div className="hidden md:block bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
@@ -295,42 +376,52 @@ export const FinanceManagement: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredExpenses.map(exp => (
-                <tr key={exp.id} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3.5 px-4">
-                    <div className="font-bold text-slate-900">{exp.title}</div>
-                    <div className="text-[11px] font-mono text-slate-400">{exp.expenseCode}</div>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
-                      {EXPENSE_CATEGORY_NAMES[exp.category] || exp.category}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="font-black text-rose-600 text-sm">
-                      -฿{exp.amount.toLocaleString()}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-slate-700 font-medium">{exp.date}</td>
-                  <td className="py-3.5 px-4 text-slate-800 font-bold">{exp.paidTo}</td>
-                  <td className="py-3.5 px-4">
-                    <div className="text-slate-700">{exp.recordedBy}</div>
-                    <div className="text-[10px] text-slate-400 uppercase">{exp.paymentMethod}</div>
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <button
-                      onClick={() => {
-                        if (confirm(`คุณต้องการลบรายการ "${exp.title}" หรือไม่?`)) {
-                          deleteExpense(exp.id);
-                        }
-                      }}
-                      className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+              {filteredExpenses.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                    <AlertCircle className="w-8 h-8 mx-auto text-slate-300 mb-2" />
+                    ไม่พบรายการค่าใช้จ่ายตามเงื่อนไขที่ค้นหา
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredExpenses.map(exp => (
+                  <tr key={exp.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="py-3.5 px-4">
+                      <div className="font-bold text-slate-900">{exp.title}</div>
+                      <div className="text-[11px] font-mono text-slate-400">{exp.expenseCode}</div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                        {EXPENSE_CATEGORY_NAMES[exp.category] || exp.category}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="font-black text-rose-600 text-sm">
+                        -฿{exp.amount.toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-slate-700 font-medium">{exp.date}</td>
+                    <td className="py-3.5 px-4 text-slate-800 font-bold">{exp.paidTo}</td>
+                    <td className="py-3.5 px-4">
+                      <div className="text-slate-700">{exp.recordedBy}</div>
+                      <div className="text-[10px] text-slate-400 uppercase">{exp.paymentMethod}</div>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() => {
+                          if (confirm(`คุณต้องการลบรายการ "${exp.title}" หรือไม่?`)) {
+                            deleteExpense(exp.id);
+                          }
+                        }}
+                        className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded cursor-pointer"
+                        title="ลบรายการ"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

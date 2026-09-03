@@ -38,6 +38,58 @@ import {
   INITIAL_SESSION_LOGS
 } from '../data/userAccounts';
 import { cleanDigits } from '../utils/validation';
+
+/**
+ * Deduplicate any array of objects by their `id` property
+ */
+export function deduplicateById<T extends { id: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const item of items) {
+    if (item && item.id && !seen.has(item.id)) {
+      seen.add(item.id);
+      out.push(item);
+    }
+  }
+  return out;
+}
+
+/**
+ * Generates a collision-safe, unique receipt or invoice number.
+ */
+export function generateUniqueReceiptNumber(
+  prefix: 'REC' | 'INV',
+  existingPayments: PaymentTransaction[],
+  year = new Date().getFullYear()
+): string {
+  let maxSeq = 0;
+  const regex = new RegExp(`^(?:REC|INV)-YLA-${year}-(\\d+)$`);
+  const usedCodes = new Set<string>();
+
+  existingPayments.forEach(p => {
+    if (p && p.receiptNumber) {
+      usedCodes.add(p.receiptNumber);
+      const match = p.receiptNumber.match(regex);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num > maxSeq) {
+          maxSeq = num;
+        }
+      }
+    }
+  });
+
+  let candidateNum = Math.max(maxSeq + 1, existingPayments.length + 1);
+  let candidate = `${prefix}-YLA-${year}-${String(candidateNum).padStart(4, '0')}`;
+
+  while (usedCodes.has(candidate)) {
+    candidateNum++;
+    candidate = `${prefix}-YLA-${year}-${String(candidateNum).padStart(4, '0')}`;
+  }
+
+  return candidate;
+}
+
 import {
   getSupabase,
   getSupabaseConfig,
@@ -128,6 +180,7 @@ interface AppContextType {
   updateSkillEvaluation: (id: string, updated: Partial<SkillEvaluation>) => void;
 
   addPayment: (payment: Omit<PaymentTransaction, 'id' | 'receiptNumber'>) => PaymentTransaction;
+  addPaymentsBatch: (payments: Omit<PaymentTransaction, 'id' | 'receiptNumber'>[]) => PaymentTransaction[];
   updatePaymentStatus: (id: string, status: PaymentStatus, method?: PaymentTransaction['paymentMethod'], receivedBy?: string, slipUrl?: string) => void;
   
   addExpense: (expense: Omit<ExpenseItem, 'id' | 'expenseCode'>) => ExpenseItem;
@@ -526,14 +579,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           });
         }
 
-        if (d.schedules && d.schedules.length > 0) setSchedules(d.schedules);
-        if (d.attendanceRecords && d.attendanceRecords.length > 0) setAttendanceRecords(d.attendanceRecords);
-        if (d.skillEvaluations && d.skillEvaluations.length > 0) setSkillEvaluations(d.skillEvaluations);
-        if (d.payments && d.payments.length > 0) setPayments(d.payments);
-        if (d.expenses && d.expenses.length > 0) setExpenses(d.expenses);
-        if (d.assets && d.assets.length > 0) setAssets(d.assets);
+        if (d.schedules && d.schedules.length > 0) setSchedules(deduplicateById(d.schedules));
+        if (d.attendanceRecords && d.attendanceRecords.length > 0) setAttendanceRecords(deduplicateById(d.attendanceRecords));
+        if (d.skillEvaluations && d.skillEvaluations.length > 0) setSkillEvaluations(deduplicateById(d.skillEvaluations));
+        if (d.payments && d.payments.length > 0) setPayments(deduplicateById(d.payments));
+        if (d.expenses && d.expenses.length > 0) setExpenses(deduplicateById(d.expenses));
+        if (d.assets && d.assets.length > 0) setAssets(deduplicateById(d.assets));
         if (d.rolePermissions) setRolePermissions(d.rolePermissions);
-        if (d.sessionLogs && d.sessionLogs.length > 0) setSessionLogs(d.sessionLogs);
+        if (d.sessionLogs && d.sessionLogs.length > 0) setSessionLogs(deduplicateById(d.sessionLogs));
         if (d.bankAccountConfig) setBankAccountConfig(d.bankAccountConfig);
         if (d.clinicTerms) setClinicTerms(d.clinicTerms);
       } else {
@@ -812,7 +865,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         linkedCoachId = existingCoach.id;
       } else {
         const nextIndex = coaches.length + 1;
-        const newCoachId = `cch-${Date.now()}`;
+        const newCoachId = `cch-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
         const coachCode = `CCH-YLA-${String(nextIndex).padStart(2, '0')}`;
 
         let assignedRole: Coach['role'] = 'assistant_coach';
@@ -858,12 +911,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newAccount: UserAccount = {
       ...userData,
       coachId: linkedCoachId,
-      id: `usr-${Date.now()}`,
+      id: `usr-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       createdAt: new Date().toISOString().split('T')[0],
       avatarUrl: userData.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
       status: 'active'
     };
-    setUserAccounts(prev => [newAccount, ...prev]);
+    setUserAccounts(prev => deduplicateById([newAccount, ...prev]));
 
     const supabase = getSupabase();
     if (supabase) {
@@ -986,7 +1039,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     let newStudent: Student = {
       ...studentData,
-      id: `std-${Date.now()}`,
+      id: `std-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       studentCode,
       registeredDate: new Date().toISOString().split('T')[0],
       avatarUrl: studentData.avatarUrl || 'https://images.unsplash.com/photo-1543326727-cf6c39e8f84c?w=150&auto=format&fit=crop&q=80',
@@ -1007,12 +1060,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }
 
-    setStudents(prev => [newStudent, ...prev]);
+    setStudents(prev => deduplicateById([newStudent, ...prev]));
 
     // 3. Automatically create initial tuition payment invoice
+    const invoiceReceiptNumber = generateUniqueReceiptNumber('INV', payments, currentYear);
     const newInvoice: PaymentTransaction = {
-      id: `pay-${Date.now()}`,
-      receiptNumber: `INV-YLA-${currentYear}-${String(payments.length + 1).padStart(4, '0')}`,
+      id: `pay-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      receiptNumber: invoiceReceiptNumber,
       studentId: newStudent.id,
       title: `ค่าธรรมเนียมแรกเข้าและค่าเรียนงวดแรก (${newStudent.category})`,
       category: 'registration_fee',
@@ -1021,7 +1075,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       status: 'pending',
       notes: 'ชุดฝึกซ้อม 2 ชุด + กระเป๋า + ค่าเรียนเดือนแรก'
     };
-    setPayments(prev => [newInvoice, ...prev]);
+    setPayments(prev => deduplicateById([newInvoice, ...prev]));
 
     // 4. Automatically create a user account for parent/student (Default username: Parent ID Card, Default password: Parent Phone)
     let newParentUser: UserAccount | null = null;
@@ -1035,7 +1089,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const parentPassword = cleanParentPhone || '1234';
 
       newParentUser = {
-        id: `usr-parent-${Date.now()}`,
+        id: `usr-parent-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
         username: parentUsername,
         email: studentData.parentEmail ? String(studentData.parentEmail).trim().toLowerCase() : `${parentUsername}@yalafootball.com`,
         phone: studentData.parentPhone || cleanParentPhone,
@@ -1048,7 +1102,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         status: 'active',
         createdAt: new Date().toISOString().split('T')[0]
       };
-      setUserAccounts(prev => [newParentUser!, ...prev]);
+      setUserAccounts(prev => deduplicateById([newParentUser!, ...prev]));
     }
 
     if (supabase) {
@@ -1174,15 +1228,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addCoach = async (coachData: Omit<Coach, 'id' | 'coachCode'>): Promise<Coach> => {
-    const count = coaches.length + 1;
-    const coachCode = `CCH-YLA-${String(count).padStart(2, '0')}`;
+    let maxNum = 0;
+    coaches.forEach(c => {
+      if (c.coachCode) {
+        const match = c.coachCode.match(/^CCH-YLA-(\d+)$/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (!isNaN(num) && num > maxNum) maxNum = num;
+        }
+      }
+    });
+    const nextNum = Math.max(coaches.length + 1, maxNum + 1);
+    const coachCode = `CCH-YLA-${String(nextNum).padStart(2, '0')}`;
     const newCoach: Coach = {
       ...coachData,
-      id: `cch-${Date.now()}`,
+      id: `cch-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       coachCode,
       avatarUrl: coachData.avatarUrl || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
     };
-    setCoaches(prev => [...prev, newCoach]);
+    setCoaches(prev => deduplicateById([...prev, newCoach]));
 
     // 1. Save Coach directly to Supabase using resilient helper
     const supabase = getSupabase();
@@ -1199,7 +1263,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       // Username: Use 13-digit Thai ID card if available, else fallback coach.nickname
       const username = (cleanId && cleanId.length === 13) 
         ? cleanId 
-        : `coach.${coachData.nickname.toLowerCase() || String(count)}`;
+        : `coach.${coachData.nickname.toLowerCase() || String(nextNum)}`;
       // Password: Use phone number (10 digits) if available, else fallback 'coach'
       const password = cleanPhone || 'coach';
 
@@ -1214,7 +1278,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const licenseSuffix = coachData.license && coachData.license !== 'ไม่มี' ? ` (${coachData.license})` : '';
 
       const newCoachUser: UserAccount = {
-        id: `usr-coach-${Date.now()}`,
+        id: `usr-coach-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
         username,
         email: coachData.email || `${username}@yalafootball.com`,
         phone: coachData.phone,
@@ -1227,7 +1291,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         status: 'active',
         createdAt: new Date().toISOString().split('T')[0]
       };
-      setUserAccounts(prev => [newCoachUser, ...prev]);
+      setUserAccounts(prev => deduplicateById([newCoachUser, ...prev]));
 
       if (supabase) {
         supabase
@@ -1330,9 +1394,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addSchedule = (scheduleData: Omit<TrainingSchedule, 'id'>) => {
     const newSchedule: TrainingSchedule = {
       ...scheduleData,
-      id: `sch-${Date.now()}`
+      id: `sch-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`
     };
-    setSchedules(prev => [...prev, newSchedule]);
+    setSchedules(prev => deduplicateById([...prev, newSchedule]));
 
     const supabase = getSupabase();
     if (supabase) {
@@ -1383,8 +1447,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const dateStr = now.toISOString().split('T')[0];
     const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    const newItems: AttendanceRecord[] = records.map(r => ({
-      id: `att-${Date.now()}-${r.studentId}`,
+    const newItems: AttendanceRecord[] = records.map((r, idx) => ({
+      id: `att-${Date.now()}-${idx}-${r.studentId}-${Math.random().toString(36).substr(2, 4)}`,
       scheduleId,
       date: dateStr,
       studentId: r.studentId,
@@ -1396,7 +1460,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setAttendanceRecords(prev => {
       const filtered = prev.filter(r => r.scheduleId !== scheduleId);
-      return [...filtered, ...newItems];
+      return deduplicateById([...filtered, ...newItems]);
     });
 
     updateSchedule(scheduleId, { status: 'completed' });
@@ -1417,10 +1481,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addSkillEvaluation = (evalData: Omit<SkillEvaluation, 'id' | 'evaluationDate'>): SkillEvaluation => {
     const newEval: SkillEvaluation = {
       ...evalData,
-      id: `eval-${Date.now()}`,
+      id: `eval-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       evaluationDate: new Date().toISOString().split('T')[0]
     };
-    setSkillEvaluations(prev => [newEval, ...prev]);
+    setSkillEvaluations(prev => deduplicateById([newEval, ...prev]));
 
     const supabase = getSupabase();
     if (supabase) {
@@ -1455,14 +1519,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addPayment = (paymentData: Omit<PaymentTransaction, 'id' | 'receiptNumber'>): PaymentTransaction => {
-    const count = payments.length + 1;
-    const receiptNumber = `REC-YLA-2026-${String(count).padStart(4, '0')}`;
+    const currentYear = new Date().getFullYear();
+    const prefix = paymentData.status === 'paid' ? 'REC' : 'INV';
+    const receiptNumber = generateUniqueReceiptNumber(prefix, payments, currentYear);
     const newPayment: PaymentTransaction = {
       ...paymentData,
-      id: `pay-${Date.now()}`,
+      id: `pay-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       receiptNumber
     };
-    setPayments(prev => [newPayment, ...prev]);
+    setPayments(prev => deduplicateById([newPayment, ...prev]));
 
     const supabase = getSupabase();
     if (supabase) {
@@ -1472,6 +1537,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     return newPayment;
+  };
+
+  const addPaymentsBatch = (paymentsData: Omit<PaymentTransaction, 'id' | 'receiptNumber'>[]): PaymentTransaction[] => {
+    if (paymentsData.length === 0) return [];
+    const currentYear = new Date().getFullYear();
+    const existing = [...payments];
+    const newPayments: PaymentTransaction[] = [];
+
+    paymentsData.forEach((pData, idx) => {
+      const uniqueId = `pay-${Date.now()}-${idx}-${Math.random().toString(36).substr(2, 6)}`;
+      const prefix = pData.status === 'paid' ? 'REC' : 'INV';
+      const receiptNumber = generateUniqueReceiptNumber(prefix, [...existing, ...newPayments], currentYear);
+      const newPayment: PaymentTransaction = {
+        ...pData,
+        id: uniqueId,
+        receiptNumber
+      };
+      newPayments.push(newPayment);
+    });
+
+    setPayments(prev => deduplicateById([...newPayments, ...prev]));
+
+    const supabase = getSupabase();
+    if (supabase) {
+      newPayments.forEach(p => {
+        saveSinglePaymentToSupabase(p).then(res => {
+          if (!res.success) console.error('❌ Supabase error saving batch payment:', res.error);
+        });
+      });
+    }
+
+    return newPayments;
   };
 
   const updatePaymentStatus = (
@@ -1513,14 +1610,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addExpense = (expenseData: Omit<ExpenseItem, 'id' | 'expenseCode'>): ExpenseItem => {
-    const count = expenses.length + 1;
-    const expenseCode = `EXP-YLA-2026-${String(count).padStart(4, '0')}`;
+    let maxSeq = 0;
+    const currentYear = new Date().getFullYear();
+    const regex = new RegExp(`^EXP-YLA-${currentYear}-(\\d+)$`);
+    expenses.forEach(e => {
+      if (e.expenseCode) {
+        const match = e.expenseCode.match(regex);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (!isNaN(num) && num > maxSeq) maxSeq = num;
+        }
+      }
+    });
+    const nextNum = Math.max(expenses.length + 1, maxSeq + 1);
+    const expenseCode = `EXP-YLA-${currentYear}-${String(nextNum).padStart(4, '0')}`;
     const newExpense: ExpenseItem = {
       ...expenseData,
-      id: `exp-${Date.now()}`,
+      id: `exp-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       expenseCode
     };
-    setExpenses(prev => [newExpense, ...prev]);
+    setExpenses(prev => deduplicateById([newExpense, ...prev]));
 
     const supabase = getSupabase();
     if (supabase) {
@@ -1546,14 +1655,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const addAsset = (assetData: Omit<ClinicAsset, 'id' | 'assetCode'>): ClinicAsset => {
-    const count = assets.length + 1;
-    const assetCode = `AST-YLA-${String(count).padStart(3, '0')}`;
+    let maxNum = 0;
+    assets.forEach(a => {
+      if (a.assetCode) {
+        const match = a.assetCode.match(/^AST-YLA-(\d+)$/);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (!isNaN(num) && num > maxNum) maxNum = num;
+        }
+      }
+    });
+    const nextNum = Math.max(assets.length + 1, maxNum + 1);
+    const assetCode = `AST-YLA-${String(nextNum).padStart(3, '0')}`;
     const newAsset: ClinicAsset = {
       ...assetData,
-      id: `ast-${Date.now()}`,
+      id: `ast-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
       assetCode
     };
-    setAssets(prev => [...prev, newAsset]);
+    setAssets(prev => deduplicateById([...prev, newAsset]));
 
     const supabase = getSupabase();
     if (supabase) {
@@ -1827,6 +1946,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addSkillEvaluation,
         updateSkillEvaluation,
         addPayment,
+        addPaymentsBatch,
         updatePaymentStatus,
         addExpense,
         deleteExpense,
